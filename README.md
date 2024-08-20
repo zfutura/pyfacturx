@@ -15,9 +15,9 @@ See the [Factur-X website (French)](https://www.factur-x.org/) or
 [FeRD website (German)](https://www.ferd-net.de/) for more information.
 
 Currently, this library supports writing XML files according Factur-X Version
-1.0.06 (aka ZUGFeRD 2.2) in the EN 16931 (Comfort) profile. Generally in scope
-of this library, but currently not supported are:
+1.0.06 (aka ZUGFeRD 2.2) in the profiles up to EN 16931 (Comfort). Generally
+in scope of this library, but currently not supported are:
 
-* Other profiles (Minimum, Basic, Basic WL, Extended, XRechnung).
-* Reading Factur-X files.
+* Extended and XRechnung profiles.
+* Reading Factur-X files (XML or PDF).
 * Embedding the XML in PDF files.
