@@ -27,8 +27,8 @@ jobs:
       - name: Install Python packages
         run: poetry install
       - name: Lint with ruff
-        run: poe lint
+        run: poetry run poe lint
       - name: Type checking with mypy
-        run: poe typecheck
+        run: poetry run poe typecheck
       - name: Test with pytest
-        run: poe test
+        run: poetry run poe test
