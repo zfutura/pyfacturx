@@ -1,0 +1,43 @@
+[tool.poetry]
+name = "facturx"
+version = "0.1.0"
+description = "Factur-X/ZUGFeRD parsing and generation library for Python"
+authors = ["Sebastian Rittau <sebastian.rittau@zfutura.de>"]
+readme = "README.md"
+license = "Apache-2.0"
+repository = "https://github.com/zfutura/pyfacturx"
+keywords = ["factur-x", "zugferd", "invoice", "billing"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: File Formats",
+    "Topic :: Office/Business :: Financial :: Accounting",
+]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.11.1"
+poethepoet = "^0.27.0"
+pytest = "^8.3.2"
+ruff = "^0.6.1"
+
+[tool.poe.tasks]
+lint = "ruff check src"
+test = "pytest src"
+typecheck = "mypy src"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 79
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "I"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

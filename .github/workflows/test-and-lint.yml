@@ -1,0 +1,27 @@
+name: Test and lint
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13"]
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: poetry
+      - name: Install Python packages
+        run: poetry install
+      - name: Lint with ruff
+        run: poe lint
+      - name: Type checking with mypy
+        run: poe typecheck
+      - name: Test with pytest
+        run: poe test

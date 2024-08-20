@@ -1,0 +1,28 @@
+version: 2
+
+updates:
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: monthly
+      time: '04:00'
+    groups:
+      dependencies:
+        exclude-patterns:
+          - "mypy"
+          - "types-*"
+        update-types:
+          - "minor"
+          - "patch"
+      mypy:
+        patterns:
+          - "mypy"
+      types:
+        patterns:
+          - "types-*"
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+      time: '04:00'
