@@ -195,10 +195,7 @@ def _generate_trade_contact(parent: ET.Element, contact: TradeContact) -> None:
 #
 
 
-def generate(invoice: EN16931Invoice) -> str:
-    if not isinstance(invoice, EN16931Invoice):
-        raise TypeError("Only EN 16931 invoices are supported.")
-
+def generate(invoice: MinimumInvoice) -> str:
     root = ET.Element(
         "rsm:CrossIndustryInvoice",
         {
@@ -216,7 +213,6 @@ def generate(invoice: EN16931Invoice) -> str:
 
 
 def _generate_doc_context(parent: ET.Element, invoice: MinimumInvoice) -> None:
-    assert isinstance(invoice, EN16931Invoice)
     doc_ctx = ET.SubElement(parent, "rsm:ExchangedDocumentContext")
     if invoice.business_doc_ctx_uri is not None:
         business_el = ET.SubElement(
