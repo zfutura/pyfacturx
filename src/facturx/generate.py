@@ -840,4 +840,6 @@ if __name__ == "__main__":
             due_date=datetime.date(2024, 9, 3),
         ),
     )
-    print(generate(invoice))
+    tree = generate_et(invoice)
+    ET.indent(tree)
+    print(ET.tostring(tree, encoding="unicode", xml_declaration=True))
