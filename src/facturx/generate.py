@@ -55,6 +55,7 @@ __all__ = [
 
 
 def xml_date(date: datetime.date) -> str:
+    """Format a date for Factur-X XML."""
     return "{:04d}{:02d}{:02d}".format(date.year, date.month, date.day)
 
 
@@ -201,6 +202,29 @@ def _generate_trade_contact(parent: ET.Element, contact: TradeContact) -> None:
 
 
 def generate_et(invoice: MinimumInvoice) -> ET.Element:
+    """
+    Generate a Factur-X invoice as ElementTree.
+
+    >>> from datetime import date
+    >>> from decimal import Decimal
+    >>> from facturx.type_codes import DocumentTypeCode
+    >>> from facturx.model import MinimumInvoice, PostalAddress, TradeParty
+    >>> invoice = MinimumInvoice(
+    ...         "12345",
+    ...         DocumentTypeCode.INVOICE,
+    ...         date(2024, 8, 22),
+    ...         TradeParty("Seller GmbH", PostalAddress("DE")),
+    ...         TradeParty("Buyer AG", PostalAddress("DE")),
+    ...         "EUR",
+    ...         (Decimal("10000.00"), "EUR"),
+    ...         (Decimal("10000.00"), "EUR"),
+    ...         (Decimal("1900.00"), "EUR"),
+    ...         (Decimal("11900.00"), "EUR"),
+    ...         (Decimal("11900.00"), "EUR"),
+    ... )
+    >>> root = generate_et(invoice)
+    """
+
     root = ET.Element(
         "rsm:CrossIndustryInvoice",
         {
@@ -218,6 +242,30 @@ def generate_et(invoice: MinimumInvoice) -> ET.Element:
 
 
 def generate(invoice: MinimumInvoice) -> str:
+    """
+    Generate a Factur-X invoice as XML string.
+
+
+    >>> from datetime import date
+    >>> from decimal import Decimal
+    >>> from facturx.type_codes import DocumentTypeCode
+    >>> from facturx.model import MinimumInvoice, PostalAddress, TradeParty
+    >>> invoice = MinimumInvoice(
+    ...         "12345",
+    ...         DocumentTypeCode.INVOICE,
+    ...         date(2024, 8, 22),
+    ...         TradeParty("Seller GmbH", PostalAddress("DE")),
+    ...         TradeParty("Buyer AG", PostalAddress("DE")),
+    ...         "EUR",
+    ...         (Decimal("10000.00"), "EUR"),
+    ...         (Decimal("10000.00"), "EUR"),
+    ...         (Decimal("1900.00"), "EUR"),
+    ...         (Decimal("11900.00"), "EUR"),
+    ...         (Decimal("11900.00"), "EUR"),
+    ... )
+    >>> xml_string = generate(invoice)
+    """
+
     root = generate_et(invoice)
     return ET.tostring(root, encoding="unicode", xml_declaration=True)
 

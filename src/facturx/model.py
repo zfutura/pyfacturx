@@ -61,6 +61,13 @@ class IncludedNote:
 
 @dataclass
 class TradeParty:
+    """
+    Trade party data used in invoices for seller, buyer, and other parties.
+
+    The required fields depend on the invoice profile and the role of the
+    party.
+    """
+
     name: str | None
     address: PostalAddress | None  # Not required in MINIMUM for the buyer
     email: str | None = None
@@ -75,6 +82,8 @@ class TradeParty:
     contacts: Sequence[TradeContact] = field(default_factory=list)
 
     def validate_minimum(self, *, buyer: bool) -> None:
+        """Validate the MINIMUM profile requirements."""
+
         if buyer:
             if self.tax_number is not None:
                 raise ValueError(
@@ -105,6 +114,8 @@ class TradeParty:
             self.address.validate_minimum()
 
     def validate_tax_representative(self) -> None:
+        """Validate the requirements for a seller tax representative."""
+
         if self.name is None:
             raise ValueError("Seller tax representative name is required.")
         if len(self.ids) > 0:
@@ -154,6 +165,8 @@ class TradeParty:
             )
 
     def validate_ship_to(self) -> None:
+        """Validate the requirements for a ship-to party."""
+
         if len(self.ids) > 1:
             raise ValueError(
                 "Multiple ship-to IDs are not allowed in BASIC WL profile."
@@ -190,6 +203,8 @@ class TradeParty:
             )
 
     def validate_payee(self) -> None:
+        """Validate the requirements for a payee party."""
+
         if len(self.ids) > 0:
             raise ValueError(
                 "Multiple payee IDs are not allowed in BASIC WL profile."
@@ -226,6 +241,8 @@ class TradeParty:
 
 @dataclass
 class TradeContact:
+    """Contact information for a trade party."""
+
     person_name: str | None = None
     department_name: str | None = None
     _: KW_ONLY
@@ -250,6 +267,7 @@ class PostalAddress:
             raise ValueError("Invalid ISO 3166-1 alpha-2 country code.")
 
     def validate_minimum(self) -> None:
+        """Validate the MINIMUM profile requirements."""
         if (
             self.country_subdivision is not None
             or self.post_code is not None
@@ -425,6 +443,8 @@ class EN16931Invoice(BasicInvoice):
 
 @dataclass
 class LineItem:
+    """Line item data used in the BASIC profile."""
+
     name: str
     net_price: Money
     billed_quantity: Quantity
@@ -442,6 +462,8 @@ class LineItem:
 
 @dataclass
 class EN16931LineItem(LineItem):
+    """Line item data used in the EN 16931/COMFORT profile."""
+
     _: KW_ONLY
     description: str | None = None
     note: IncludedNote | None = None
@@ -487,12 +509,16 @@ class EN16931LineItem(LineItem):
 
 @dataclass
 class ProductCharacteristic:
+    """A single product characteristic."""
+
     description: str
     value: str
 
 
 @dataclass
 class ProductClassification:
+    """A single product classification."""
+
     class_code: str
     _: KW_ONLY
     list_id: ItemTypeCode | None = None
@@ -501,12 +527,16 @@ class ProductClassification:
 
 @dataclass
 class UnitAllowanceCharge:
+    """A unit allowance or charge."""
+
     actual_amount: Money
     reason_code: AllowanceChargeCode | SpecialServiceCode | None = None
 
 
 @dataclass
 class LineAllowanceCharge:
+    """An allowance or charge for a line item."""
+
     actual_amount: Money
     surcharge: bool = False
     reason_code: AllowanceChargeCode | SpecialServiceCode | None = None
@@ -532,6 +562,8 @@ class LineAllowanceCharge:
 
 @dataclass
 class ReferenceDocument:
+    """A reference document attached to an invoice."""
+
     id: str
     type_code: DocumentTypeCode
     name: str | None = None
@@ -549,6 +581,8 @@ class ReferenceDocument:
 
 @dataclass
 class PaymentMeans:
+    """Payment means data used in invoices."""
+
     type_code: PaymentMeansCode
     payee_account: BankAccount | None = None
     payee_bic: str | None = None
@@ -585,6 +619,8 @@ class PaymentMeans:
 
 @dataclass
 class PaymentTerms:
+    """Payment terms data used in invoices."""
+
     _: KW_ONLY
     description: str | None = None
     due_date: datetime.date | None = None
@@ -600,6 +636,8 @@ class PaymentTerms:
 
 @dataclass
 class BankAccount:
+    """Bank account data used in invoices."""
+
     iban: str | None
     name: str | None
     bank_id: str | None
@@ -607,6 +645,8 @@ class BankAccount:
 
 @dataclass
 class Tax:
+    """A single tax entry for an invoice."""
+
     calculated_amount: Money
     basis_amount: Money
     rate_percent: Decimal
@@ -626,7 +666,8 @@ class Tax:
                 "Invalid due date type code: {self.due_date_type_code}."
             )
 
-    def verify_basic(self) -> None:
+    def validate_basic(self) -> None:
+        """Validate the requirements for the BASIC profile."""
         if self.tax_point_date is not None:
             raise ValueError(
                 "Tax point date is not allowed in the BASIC profile."
