@@ -42,7 +42,7 @@ from .type_codes import (
     TaxCategoryCode,
     TextSubjectCode,
 )
-from .types import ID, Money, Quantity
+from .types import ID, DocRef, Money, Quantity
 
 __all__ = [
     "generate",
@@ -464,6 +464,30 @@ def _generate_line_settlement(
         line_item.billed_total,
         invoice.currency_code,
     )
+    if isinstance(line_item, EN16931LineItem):
+        for doc in line_item.ref_docs:
+            _generate_referenced_document(settlement, doc)
+        if line_item.trade_account_id is not None:
+            _generate_trade_account(settlement, line_item.trade_account_id)
+
+
+def _generate_referenced_document(parent: ET.Element, doc: DocRef) -> None:
+    id, ref_type_code = doc
+    doc_el = ET.SubElement(parent, "ram:AdditionalReferencedDocument")
+    if id is not None:
+        ET.SubElement(doc_el, "ram:IssuerAssignedID").text = id
+    ET.SubElement(doc_el, "ram:TypeCode").text = str(
+        DocumentTypeCode.INVOICING_DATA_SHEET
+    )
+    if ref_type_code is not None:
+        ET.SubElement(doc_el, "ram:ReferenceTypeCode").text = ref_type_code
+
+
+def _generate_trade_account(parent: ET.Element, id: str) -> None:
+    account_el = ET.SubElement(
+        parent, "ram:ReceivableSpecifiedTradeAccountingAccount"
+    )
+    ET.SubElement(account_el, "ram:ID").text = id
 
 
 def _generate_allowance_charge(
@@ -663,8 +687,11 @@ def _generate_settlement(parent: ET.Element, invoice: MinimumInvoice) -> None:
 
     _generate_summation(settlement_el, invoice)
 
-    # TODO: InvoiceReferencedDocument
-    # TODO: ReceivableSpecifiedTradeAccountingAccount
+    if isinstance(invoice, EN16931Invoice):
+        if invoice.ref_doc is not None:
+            _generate_referenced_document(settlement_el, invoice.ref_doc)
+        if invoice.trade_account_id is not None:
+            _generate_trade_account(settlement_el, invoice.trade_account_id)
 
 
 def _generate_payment_means(parent: ET.Element, means: PaymentMeans) -> None:
@@ -931,6 +958,7 @@ if __name__ == "__main__":
                     datetime.date(2024, 8, 1),
                     datetime.date(2024, 8, 31),
                 ),
+                ref_docs=[("REFDOC-1", None)],
             ),
         ],
         buyer_reference="BUYER-1234",

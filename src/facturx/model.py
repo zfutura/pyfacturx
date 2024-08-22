@@ -26,7 +26,7 @@ from .type_codes import (
     TextSubjectCode,
     VATExemptionCode,
 )
-from .types import ID, Attachment, Money, Quantity
+from .types import ID, Attachment, DocRef, Money, Quantity
 
 __all__ = [
     "MinimumInvoice",
@@ -433,6 +433,8 @@ class EN16931Invoice(BasicInvoice):
     referenced_docs: Sequence[ReferenceDocument] = field(default_factory=list)
     procuring_project: tuple[str, str] | None = None
     tax_currency_code: str | None = None
+    trade_account_id: str | None = None
+    ref_doc: DocRef | None = None
 
 
 @dataclass
@@ -475,6 +477,8 @@ class EN16931LineItem(LineItem):
     origin_country: str | None = None
     buyer_order_ref_doc_id: str | None = None
     billing_period: tuple[datetime.date, datetime.date] | None = None
+    ref_docs: Sequence[DocRef] = field(default_factory=list)
+    trade_account_id: str | None = None
 
     def __post_init__(self) -> None:
         if self.note is not None and self.note.subject_code is not None:
