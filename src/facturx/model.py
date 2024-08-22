@@ -7,7 +7,12 @@ from decimal import Decimal
 from types import NoneType
 from typing import ClassVar
 
-from .const import URN_BASIC_PROFILE, URN_BASIC_WL_PROFILE, URN_EN16931_PROFILE
+from .const import (
+    URN_BASIC_PROFILE,
+    URN_BASIC_WL_PROFILE,
+    URN_EN16931_PROFILE,
+    URN_MINIMUM_PROFILE,
+)
 from .countries import validate_iso_3166_1_alpha_2
 from .type_codes import (
     AllowanceChargeCode,
@@ -240,7 +245,7 @@ class PostalAddress:
 class MinimumInvoice:
     """Invoice data for the MINIMUM profile."""
 
-    PROFILE_URN: ClassVar[str] = URN_EN16931_PROFILE
+    PROFILE_URN: ClassVar[str] = URN_MINIMUM_PROFILE
 
     invoice_number: str
     type_code: DocumentTypeCode
