@@ -89,13 +89,20 @@ def _currency_element(
     parent: ET.Element,
     name: str,
     amount: Money,
+    default_currency: str,
     *,
     with_currency: bool = False,
 ) -> ET.Element:
+    if isinstance(amount, Decimal):
+        am = amount
+        currency = default_currency
+    else:
+        am, currency = amount
+
     el = ET.SubElement(parent, name)
-    if with_currency:
-        el.set("currencyID", amount[1])
-    el.text = str(amount[0])
+    if with_currency or currency != default_currency:
+        el.set("currencyID", currency)
+    el.text = str(am)
     return el
 
 
@@ -301,14 +308,17 @@ def _generate_transaction(parent: ET.Element, invoice: MinimumInvoice) -> None:
     if isinstance(invoice, BasicInvoice):
         assert len(invoice.line_items) >= 1  # BG-25
         for idx, li in enumerate(invoice.line_items, start=1):
-            _generate_line_item(transaction_el, li, idx)
+            _generate_line_item(transaction_el, invoice, li, idx)
     _generate_trade_agreement(transaction_el, invoice)
     _generate_delivery(transaction_el, invoice)
     _generate_settlement(transaction_el, invoice)
 
 
 def _generate_line_item(
-    parent: ET.Element, line_item: LineItem, index: int
+    parent: ET.Element,
+    invoice: BasicInvoice,
+    line_item: LineItem,
+    index: int,
 ) -> None:
     li_el = ET.SubElement(
         parent,
@@ -318,7 +328,7 @@ def _generate_line_item(
     _generate_line_item_product(li_el, line_item)
     _generate_line_trade_agreement(li_el, line_item)
     _generate_line_delivery(li_el, line_item)
-    _generate_line_settlement(li_el, line_item)
+    _generate_line_settlement(li_el, invoice, line_item)
 
 
 def _generate_line_item_doc(
@@ -404,7 +414,7 @@ def _generate_line_trade_agreement(
                     allowance_el,
                     "ram:ActualAmount",
                     line_item.unit_allowance_charge.actual_amount,
-                    with_currency=True,
+                    invoice.currency_code,
                 )
                 if line_item.unit_allowance_charge.reason_code is not None:
                     ET.SubElement(allowance_el, "ram:ReasonCode").text = str(
@@ -412,7 +422,10 @@ def _generate_line_trade_agreement(
                     )
     price_el = ET.SubElement(agreement, "ram:NetPriceProductTradePrice")
     _currency_element(
-        price_el, "ram:ChargeAmount", line_item.net_price, with_currency=True
+        price_el,
+        "ram:ChargeAmount",
+        line_item.net_price,
+        invoice.currency_code,
     )
     if line_item.basis_quantity is not None:
         _quantity_element(
@@ -427,7 +440,9 @@ def _generate_line_delivery(parent: ET.Element, line_item: LineItem) -> None:
     )
 
 
-def _generate_line_settlement(parent: ET.Element, line_item: LineItem) -> None:
+def _generate_line_settlement(
+    parent: ET.Element, invoice: BasicInvoice, line_item: LineItem
+) -> None:
     settlement = ET.SubElement(parent, "ram:SpecifiedLineTradeSettlement")
     tax = ET.SubElement(settlement, "ram:ApplicableTradeTax")
     ET.SubElement(tax, "ram:TypeCode").text = "VAT"
@@ -459,13 +474,13 @@ def _generate_line_settlement(parent: ET.Element, line_item: LineItem) -> None:
                 allowance_et,
                 "ram:BasisAmount",
                 allowance.basis_amount,
-                with_currency=True,
+                invoice.currency_code,
             )
         _currency_element(
             allowance_et,
             "ram:ActualAmount",
             allowance.actual_amount,
-            with_currency=True,
+            invoice.currency_code,
         )
         if allowance.reason_code is not None:
             ET.SubElement(allowance_et, "ram:ReasonCode").text = str(
@@ -477,7 +492,12 @@ def _generate_line_settlement(parent: ET.Element, line_item: LineItem) -> None:
         settlement,
         "ram:SpecifiedTradeSettlementLineMonetarySummation",
     )
-    _currency_element(summation, "ram:LineTotalAmount", line_item.billed_total)
+    _currency_element(
+        summation,
+        "ram:LineTotalAmount",
+        line_item.billed_total,
+        invoice.currency_code,
+    )
 
 
 def _generate_trade_agreement(
@@ -674,13 +694,20 @@ def _generate_payment_means(parent: ET.Element, means: PaymentMeans) -> None:
 
 def _generate_tax(parent: ET.Element, tax: Tax) -> None:
     tax_el = ET.SubElement(parent, "ram:ApplicableTradeTax")
-    _currency_element(tax_el, "ram:CalculatedAmount", tax.calculated_amount)
+    _currency_element(
+        tax_el,
+        "ram:CalculatedAmount",
+        tax.calculated_amount,
+        invoice.currency_code,
+    )
     ET.SubElement(tax_el, "ram:TypeCode").text = "VAT"
     if tax.exemption_reason is not None:
         ET.SubElement(
             tax_el, "ram:ExemptionReason"
         ).text = tax.exemption_reason
-    _currency_element(tax_el, "ram:BasisAmount", tax.basis_amount)
+    _currency_element(
+        tax_el, "ram:BasisAmount", tax.basis_amount, invoice.currency_code
+    )
     ET.SubElement(tax_el, "ram:CategoryCode").text = str(tax.category_code)
     if tax.exemption_reason_code is not None:
         ET.SubElement(tax_el, "ram:ExemptionReasonCode").text = str(
@@ -715,40 +742,66 @@ def _generate_summation(parent: ET.Element, invoice: MinimumInvoice) -> None:
     )
     if invoice.line_total_amount is not None:
         _currency_element(
-            summation, "ram:LineTotalAmount", invoice.line_total_amount
+            summation,
+            "ram:LineTotalAmount",
+            invoice.line_total_amount,
+            invoice.currency_code,
         )
     if isinstance(invoice, BasicWLInvoice):
         if invoice.charge_total_amount is not None:
             _currency_element(
-                summation, "ram:ChargeTotalAmount", invoice.charge_total_amount
+                summation,
+                "ram:ChargeTotalAmount",
+                invoice.charge_total_amount,
+                invoice.currency_code,
             )
         if invoice.allowance_total_amount is not None:
             _currency_element(
                 summation,
                 "ram:AllowanceTotalAmount",
                 invoice.allowance_total_amount,
+                invoice.currency_code,
             )
     _currency_element(
-        summation, "ram:TaxBasisTotalAmount", invoice.tax_basis_total_amount
+        summation,
+        "ram:TaxBasisTotalAmount",
+        invoice.tax_basis_total_amount,
+        invoice.currency_code,
     )
     _currency_element(
-        summation, "ram:TaxTotalAmount", invoice.tax_total_amount
+        summation,
+        "ram:TaxTotalAmount",
+        invoice.tax_total_amount,
+        invoice.currency_code,
+        with_currency=True,
     )
     if isinstance(invoice, EN16931Invoice):
         if invoice.rounding_amount is not None:
             _currency_element(
-                summation, "ram:RoundingAmount", invoice.rounding_amount
+                summation,
+                "ram:RoundingAmount",
+                invoice.rounding_amount,
+                invoice.currency_code,
             )
     _currency_element(
-        summation, "ram:GrandTotalAmount", invoice.grand_total_amount
+        summation,
+        "ram:GrandTotalAmount",
+        invoice.grand_total_amount,
+        invoice.currency_code,
     )
     if isinstance(invoice, BasicWLInvoice):
         if invoice.prepaid_amount is not None:
             _currency_element(
-                summation, "ram:TotalPrepaidAmount", invoice.prepaid_amount
+                summation,
+                "ram:TotalPrepaidAmount",
+                invoice.prepaid_amount,
+                invoice.currency_code,
             )
     _currency_element(
-        summation, "ram:DuePayableAmount", invoice.due_payable_amount
+        summation,
+        "ram:DuePayableAmount",
+        invoice.due_payable_amount,
+        invoice.currency_code,
     )
 
 
@@ -782,11 +835,11 @@ if __name__ == "__main__":
         seller,
         buyer,
         "EUR",
-        (Decimal("10090.00"), "EUR"),
-        (Decimal("10090.00"), "EUR"),
-        (Decimal("19.00"), "EUR"),
-        (Decimal("10089.00"), "EUR"),
-        (Decimal("10089.00"), "EUR"),
+        Decimal("10090.00"),
+        Decimal("10090.00"),
+        Decimal("19.00"),
+        Decimal("10089.00"),
+        Decimal("10089.00"),
         tax=[
             Tax(
                 (Decimal("33.44"), "EUR"),

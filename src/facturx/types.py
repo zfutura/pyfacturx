@@ -9,7 +9,7 @@ from .quantities import QuantityCode
 # The scheme ID must be from the ISO/IEC 6523 list.
 ID: TypeAlias = tuple[str, str]
 Quantity: TypeAlias = tuple[Decimal, QuantityCode]
-# (amount, unit code)
-Money: TypeAlias = tuple[Decimal, str]
+# (amount, unit code) or just amount
+Money: TypeAlias = tuple[Decimal, str] | Decimal
 # (content, mime type, filename)
 Attachment: TypeAlias = tuple[bytes, str, str]
