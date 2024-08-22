@@ -5,7 +5,7 @@ from collections.abc import Sequence
 from dataclasses import KW_ONLY, dataclass, field
 from decimal import Decimal
 from types import NoneType
-from typing import ClassVar
+from typing import ClassVar, Literal
 
 from .const import (
     URN_BASIC_PROFILE,
@@ -81,162 +81,202 @@ class TradeParty:
     trading_business_name: str | None = None
     contacts: Sequence[TradeContact] = field(default_factory=list)
 
-    def validate_minimum(self, *, buyer: bool) -> None:
-        """Validate the MINIMUM profile requirements."""
+    def validate(
+        self,
+        profile: type[MinimumInvoice],
+        *,
+        which: Literal[
+            "seller", "buyer", "seller tax representative", "ship to", "payee"
+        ],
+    ) -> None:
+        """Validate the requirements for the given profile."""
 
-        if buyer:
+        if which in ("seller tax representative", "ship to", "payee"):
+            if not issubclass(profile, BasicWLInvoice):
+                raise ValueError(
+                    f"{which.capitalize} is not allowed in the "
+                    f"{profile.PROFILE_NAME} profile."
+                )
+
+        # ids and global_ids
+
+        if which in ("buyer", "ship to", "payee"):
+            if issubclass(profile, BasicWLInvoice):
+                if len(self.ids) > 1:
+                    raise ValueError(
+                        f"Multiple {which} IDs are not allowed in the "
+                        f"{profile.PROFILE_NAME} profile."
+                    )
+                if len(self.global_ids) > 1:
+                    raise ValueError(
+                        f"Multiple {which} global IDs are not allowed in the "
+                        f"{profile.PROFILE_NAME} profile."
+                    )
+            else:  # only relevant for "buyer"
+                if len(self.ids) > 0:
+                    raise ValueError(
+                        f"{which.capitalize()} IDs are not allowed in the "
+                        f"{profile.PROFILE_NAME} profile."
+                    )
+                if len(self.global_ids) > 0:
+                    raise ValueError(
+                        f"{which.capitalize()} global IDs are not allowed "
+                        f"in the {profile.PROFILE_NAME} profile."
+                    )
+
+        elif which == "seller":
+            if not issubclass(profile, BasicWLInvoice):
+                if len(self.ids) > 0:
+                    raise ValueError(
+                        "Seller IDs are not allowed in the "
+                        f"{profile.PROFILE_NAME} profile."
+                    )
+                if len(self.global_ids) > 0:
+                    raise ValueError(
+                        "Seller global IDs are not allowed in the "
+                        f"{profile.PROFILE_NAME} profile."
+                    )
+        elif which == "seller tax representative":
+            if len(self.ids) > 0:
+                raise ValueError(
+                    "Seller tax representative IDs are not allowed in the "
+                    f"{profile.PROFILE_NAME} profile."
+                )
+            if len(self.global_ids) > 0:
+                raise ValueError(
+                    "Seller tax representative global IDs are not allowed "
+                    f"in the {profile.PROFILE_NAME} profile."
+                )
+
+        # name
+
+        # Optional for ship to party only.
+        if which != "ship to" and self.name is None:
+            raise ValueError(f"{which.capitalize()} name is required.")
+
+        # description
+
+        # Allowed only for seller in EN 16931/COMFORT.
+        if which != "seller" or not issubclass(profile, EN16931Invoice):
+            if self.description is not None:
+                raise ValueError(
+                    f"{which.capitalize()} description is not allowed."
+                )
+
+        # legal organization ID
+
+        # Not allowed for seller tax representative and ship to party.
+        if which in ("seller tax representative", "ship to"):
+            if self.legal_id is not None:
+                raise ValueError(
+                    f"{which.capitalize()} legal ID is not allowed "
+                    f"in the {profile.PROFILE_NAME} profile."
+                )
+
+        # legal organization trading business name
+
+        # Allowed for buyer in EN 16931/COMFORT and for seller in BASIC WL.
+        if which == "buyer":
+            if not issubclass(profile, EN16931Invoice):
+                if self.trading_business_name is not None:
+                    raise ValueError(
+                        "Buyer trading business name is not allowed "
+                        f"in the {profile.PROFILE_NAME} profile."
+                    )
+        elif which == "seller":
+            if not issubclass(profile, BasicWLInvoice):
+                if self.trading_business_name is not None:
+                    raise ValueError(
+                        "Seller trading business name is not allowed in the "
+                        f"{profile.PROFILE_NAME} profile."
+                    )
+        else:
+            if self.trading_business_name is not None:
+                raise ValueError(
+                    f"{which.capitalize()} trading business name is not "
+                    f"allowed in the {profile.PROFILE_NAME} profile."
+                )
+
+        # contacts
+
+        # Only allowed for buyer and seller in EN 16931/COMFORT.
+        if which not in ("buyer", "seller") or not issubclass(
+            profile, EN16931Invoice
+        ):
+            if len(self.contacts) > 0:
+                raise ValueError(
+                    f"{which.capitalize()} contacts are not allowed "
+                    f"in the {profile.PROFILE_NAME} profile."
+                )
+
+        # address
+
+        # Not allowed for payee.
+        # Required for seller, seller tax representative in all profiles,
+        # and buyer in BASIC WL.
+        # Optional for buyer in MINIMUM and for ship to party.
+        if which == "payee":
+            if self.address is not None:
+                raise ValueError(
+                    "Payee address is not allowed in the "
+                    f"{profile.PROFILE_NAME} profile."
+                )
+        elif which in ("seller", "seller tax representative") or (
+            which == "buyer" and issubclass(profile, BasicWLInvoice)
+        ):
+            if self.address is None:
+                raise ValueError(
+                    f"{which.capitalize()} address is required in the "
+                    f"{profile.PROFILE_NAME} profile."
+                )
+
+        if self.address is not None:
+            self.address.validate(profile)
+
+        # email
+
+        # Not allowed in MINIMUM.
+        if not issubclass(profile, BasicWLInvoice):
+            if self.email is not None:
+                raise ValueError(
+                    f"{which.capitalize()} email is not allowed in the "
+                    f"{profile.PROFILE_NAME} profile."
+                )
+
+        # tax number
+
+        # Not allowed for buyer in MINIMUM and other parties.
+        # Optional buyer in BASIC WL and seller.
+        if (
+            which == "buyer" and not issubclass(profile, BasicWLInvoice)
+        ) or which in ("seller tax representative", "ship to", "payee"):
             if self.tax_number is not None:
                 raise ValueError(
-                    "Buyer tax number is not allowed in the MINIMUM profile."
+                    f"{which.capitalize()} tax number is not allowed in the "
+                    f"{profile.PROFILE_NAME} profile."
                 )
+
+        # VAT ID
+
+        # Required for seller tax representative.
+        # Not allowed for buyer in MINIMUM and other parties.
+        # Optional for buyer in BASIC WL and seller.
+        if which == "seller tax representative":
+            if self.vat_id is None:
+                raise ValueError(
+                    "Seller tax representative VAT ID is required in the "
+                    f"{profile.PROFILE_NAME} profile."
+                )
+        elif (
+            which == "buyer"
+            and not issubclass(profile, BasicWLInvoice)
+            or which in ("ship to", "payee")
+        ):
             if self.vat_id is not None:
                 raise ValueError(
-                    "Buyer VAT ID is not allowed in the MINIMUM profile."
+                    f"{which.capitalize()} VAT ID is not allowed in the "
+                    f"{profile.PROFILE_NAME} profile."
                 )
-        if self.email is not None:
-            raise ValueError(
-                "Seller email is not allowed in the MINIMUM profile."
-            )
-        if len(self.ids) > 0:
-            raise ValueError(
-                "Seller IDs are not allowed in the MINIMUM profile."
-            )
-        if len(self.global_ids) > 0:
-            raise ValueError(
-                "Seller global IDs are not allowed in the MINIMUM profile."
-            )
-        if self.trading_business_name is not None:
-            raise ValueError(
-                "Seller trading business name is not allowed "
-                "in the MINIMUM profile."
-            )
-        if self.address is not None:
-            self.address.validate_minimum()
-
-    def validate_tax_representative(self) -> None:
-        """Validate the requirements for a seller tax representative."""
-
-        if self.name is None:
-            raise ValueError("Seller tax representative name is required.")
-        if len(self.ids) > 0:
-            raise ValueError(
-                "Seller tax representative IDs are not allowed in BASIC WL "
-                "profile."
-            )
-        if len(self.global_ids) > 0:
-            raise ValueError(
-                "Seller tax representative global IDs are not allowed in "
-                "BASIC WL profile."
-            )
-        if self.legal_id is not None:
-            raise ValueError(
-                "Seller tax representative legal ID is not allowed in BASIC "
-                "WL profile."
-            )
-        if self.trading_business_name is not None:
-            raise ValueError(
-                "Seller tax representative trading business name is not "
-                "allowed in BASIC WL profile."
-            )
-        if len(self.contacts) > 0:
-            raise ValueError(
-                "Seller tax representative contacts are not allowed in BASIC "
-                "WL profile."
-            )
-        if self.address is None:
-            raise ValueError(
-                "Seller tax representative address is required in BASIC WL "
-                "profile."
-            )
-        if self.email is not None:
-            raise ValueError(
-                "Seller tax representative email is not allowed in BASIC WL "
-                "profile."
-            )
-        if self.tax_number is not None:
-            raise ValueError(
-                "Seller tax representative tax number is not allowed in BASIC "
-                "WL profile."
-            )
-        if self.vat_id is None:
-            raise ValueError(
-                "Seller tax representative VAT ID is required in BASIC WL "
-                "profile."
-            )
-
-    def validate_ship_to(self) -> None:
-        """Validate the requirements for a ship-to party."""
-
-        if len(self.ids) > 1:
-            raise ValueError(
-                "Multiple ship-to IDs are not allowed in BASIC WL profile."
-            )
-        if len(self.global_ids) > 1:
-            raise ValueError(
-                "Multiple ship-to global IDs are not allowed in BASIC WL "
-                "profile."
-            )
-        if self.legal_id is not None:
-            raise ValueError(
-                "Ship-to legal ID is not allowed in BASIC WL profile."
-            )
-        if self.trading_business_name is not None:
-            raise ValueError(
-                "Ship-to trading business name is not allowed in BASIC WL "
-                "profile."
-            )
-        if len(self.contacts) > 0:
-            raise ValueError(
-                "Ship-to contacts are not allowed in BASIC WL profile."
-            )
-        if self.email is not None:
-            raise ValueError(
-                "Ship-to email is not allowed in BASIC WL profile."
-            )
-        if self.tax_number is not None:
-            raise ValueError(
-                "Ship-to tax number is not allowed in BASIC WL profile."
-            )
-        if self.vat_id is not None:
-            raise ValueError(
-                "Ship-to VAT ID is not allowed in BASIC WL profile."
-            )
-
-    def validate_payee(self) -> None:
-        """Validate the requirements for a payee party."""
-
-        if len(self.ids) > 0:
-            raise ValueError(
-                "Multiple payee IDs are not allowed in BASIC WL profile."
-            )
-        if len(self.global_ids) > 0:
-            raise ValueError(
-                "Multiple payee global IDs are not allowed in "
-                "BASIC WL profile."
-            )
-        if self.trading_business_name is not None:
-            raise ValueError(
-                "Payee trading business name is not allowed in BASIC WL "
-                "profile."
-            )
-        if len(self.contacts) > 0:
-            raise ValueError(
-                "Payee contacts are not allowed in BASIC WL profile."
-            )
-        if self.address is not None:
-            raise ValueError(
-                "Payee address is not allowed in BASIC WL profile."
-            )
-        if self.email is not None:
-            raise ValueError("Payee email is not allowed in BASIC WL profile.")
-        if self.tax_number is not None:
-            raise ValueError(
-                "Payee tax number is not allowed in BASIC WL profile."
-            )
-        if self.vat_id is not None:
-            raise ValueError(
-                "Payee VAT ID is not allowed in BASIC WL profile."
-            )
 
 
 @dataclass
@@ -266,25 +306,28 @@ class PostalAddress:
         if not validate_iso_3166_1_alpha_2(self.country_code):
             raise ValueError("Invalid ISO 3166-1 alpha-2 country code.")
 
-    def validate_minimum(self) -> None:
-        """Validate the MINIMUM profile requirements."""
-        if (
-            self.country_subdivision is not None
-            or self.post_code is not None
-            or self.city is not None
-            or self.line_one is not None
-            or self.line_two is not None
-            or self.line_three is not None
-        ):
-            raise ValueError(
-                "Address fields are not allowed in the MINIMUM profile."
-            )
+    def validate(self, profile: type[MinimumInvoice]) -> None:
+        """Validate the requirements for the given profile."""
+        if not issubclass(profile, BasicWLInvoice):
+            if (
+                self.country_subdivision is not None
+                or self.post_code is not None
+                or self.city is not None
+                or self.line_one is not None
+                or self.line_two is not None
+                or self.line_three is not None
+            ):
+                raise ValueError(
+                    "Address fields are not allowed in the "
+                    f"{profile.PROFILE_NAME} profile."
+                )
 
 
 @dataclass
 class MinimumInvoice:
     """Invoice data for the MINIMUM profile."""
 
+    PROFILE_NAME: ClassVar[str] = "MINIMUM"
     PROFILE_URN: ClassVar[str] = URN_MINIMUM_PROFILE
 
     invoice_number: str
@@ -308,41 +351,15 @@ class MinimumInvoice:
     def __post_init__(self) -> None:
         if not self.type_code.is_invoice_type:
             raise ValueError(f"Invalid invoice type code: {self.type_code}.")
-        if self.seller.address is None:
-            raise ValueError("Seller address is required in MINIMUM profile.")
-        if type(self) is MinimumInvoice:
-            self.seller.validate_minimum(buyer=False)
-            self.buyer.validate_minimum(buyer=True)
-        if self.seller.name is None:
-            raise ValueError("Seller name is required.")
-        if self.buyer.name is None:
-            raise ValueError("Buyer name is required.")
-        if self.buyer.description is not None:
-            raise ValueError("Buyer description is not allowed.")
-        if not isinstance(self, EN16931Invoice):
-            if self.seller.description is not None:
-                raise ValueError(
-                    "Seller description is not allowed in this profile."
-                )
-            if len(self.seller.contacts) > 0:
-                raise ValueError(
-                    "Seller contacts are not allowed in this profile."
-                )
-            if len(self.buyer.contacts) > 0:
-                raise ValueError(
-                    "Buyer contacts are not allowed in this profile."
-                )
-            if self.buyer.trading_business_name is not None:
-                raise ValueError(
-                    "Buyer trading business name is not allowed "
-                    "in this profile."
-                )
+        self.seller.validate(type(self), which="seller")
+        self.buyer.validate(type(self), which="buyer")
 
 
 @dataclass
 class BasicWLInvoice(MinimumInvoice):
     """Invoice data for the BASIC WL profile."""
 
+    PROFILE_NAME = "BASIC WL"
     PROFILE_URN = URN_BASIC_WL_PROFILE
 
     tax: Sequence[Tax]
@@ -377,29 +394,27 @@ class BasicWLInvoice(MinimumInvoice):
             )
         if len(self.tax) < 1:
             raise ValueError("At least one tax entry is required.")
+        for tax in self.tax:
+            tax.validate(type(self))
         if self.payee is not None:
-            self.payee.validate_payee()
-        if len(self.buyer.global_ids) > 1:
-            raise ValueError(
-                "Only one buyer global ID is allowed in BASIC WL profile."
-            )
+            self.payee.validate(type(self), which="payee")
         if self.seller_tax_representative is not None:
-            self.seller_tax_representative.validate_tax_representative()
-        if self.buyer.address is None:
-            raise ValueError("Buyer address is required in BASIC WL profile.")
+            self.seller_tax_representative.validate(
+                type(self), which="seller tax representative"
+            )
         if self.ship_to is not None:
-            self.ship_to.validate_ship_to()
-        if not isinstance(self, EN16931Invoice):
-            for means in self.payment_means:
-                means.verify_basic()
-            if self.payment_terms is not None:
-                self.payment_terms.verify_basic()
+            self.ship_to.validate(type(self), which="ship to")
+        for means in self.payment_means:
+            means.validate(type(self))
+        if self.payment_terms is not None:
+            self.payment_terms.validate(type(self))
 
 
 @dataclass
 class BasicInvoice(BasicWLInvoice):
     """Invoice data for the BASIC profile."""
 
+    PROFILE_NAME = "BASIC"
     PROFILE_URN = URN_BASIC_PROFILE
 
     _: KW_ONLY
@@ -416,14 +431,15 @@ class BasicInvoice(BasicWLInvoice):
                         "EN 16931/COMFORT line items are not allowed in the "
                         "BASIC profile."
                     )
-                for allowance in li.specified_allowance_charges:
-                    allowance.validate_basic()
+        for li in self.line_items:
+            li.validate(type(self))
 
 
 @dataclass
 class EN16931Invoice(BasicInvoice):
     """Invoice data for the EN 16931/COMFORT profile."""
 
+    PROFILE_NAME = "EN 16931/COMFORT"
     PROFILE_URN = URN_EN16931_PROFILE
 
     _: KW_ONLY
@@ -454,6 +470,11 @@ class LineItem:
     specified_allowance_charges: Sequence[LineAllowanceCharge] = field(
         default_factory=list
     )
+
+    def validate(self, profile: type[BasicInvoice]) -> None:
+        """Validate the requirements for the given profile."""
+        for allowance in self.specified_allowance_charges:
+            allowance.validate(profile)
 
 
 @dataclass
@@ -549,18 +570,19 @@ class LineAllowanceCharge:
             ):
                 raise ValueError("Allowance/charge requires a reason code.")
 
-    def validate_basic(self) -> None:
-        """Validate the requirements for the BASIC profile."""
-        if self.percent is not None:
-            raise ValueError(
-                "Percentage-based allowances/charges are not allowed in the "
-                "BASIC profile."
-            )
-        if self.basis_amount is not None:
-            raise ValueError(
-                "Basis amount-based allowances/charges are not allowed in the "
-                "BASIC profile."
-            )
+    def validate(self, profile: type[BasicInvoice]) -> None:
+        """Validate the requirements for the given profile."""
+        if not issubclass(profile, EN16931Invoice):
+            if self.percent is not None:
+                raise ValueError(
+                    "Percentage-based allowances/charges are not allowed "
+                    f"in the {profile.PROFILE_NAME} profile."
+                )
+            if self.basis_amount is not None:
+                raise ValueError(
+                    "Basis amount-based allowances/charges are not allowed "
+                    f"in the {profile.PROFILE_NAME} profile."
+                )
 
 
 @dataclass
@@ -604,29 +626,32 @@ class PaymentMeans:
     card: tuple[str, str | None] | None = None
     payer_iban: str | None = None
 
-    def verify_basic(self) -> None:
-        if self.information is not None:
-            raise ValueError(
-                "Payment means information is not allowed in the "
-                "BASIC profile."
-            )
-        if self.card is not None:
-            raise ValueError(
-                "Payment means card information is not allowed in the "
-                "BASIC profile."
-            )
-        if (
-            self.payee_account is not None
-            and self.payee_account.name is not None
-        ):
-            raise ValueError(
-                "Payment means account name is not allowed in the BASIC "
-                "profile."
-            )
-        if self.payee_bic is not None:
-            raise ValueError(
-                "Payment means BIC is not allowed in the BASIC profile."
-            )
+    def validate(self, profile: type[BasicWLInvoice]) -> None:
+        """Validate the requirements for the given profile."""
+        if not issubclass(profile, EN16931Invoice):
+            if self.information is not None:
+                raise ValueError(
+                    "Payment means information is not allowed in the "
+                    f"{profile.PROFILE_NAME} profile."
+                )
+            if self.card is not None:
+                raise ValueError(
+                    "Payment means card information is not allowed in the "
+                    f"{profile.PROFILE_NAME} profile."
+                )
+            if (
+                self.payee_account is not None
+                and self.payee_account.name is not None
+            ):
+                raise ValueError(
+                    "Payment means account name is not allowed in the "
+                    f"{profile.PROFILE_NAME} profile."
+                )
+            if self.payee_bic is not None:
+                raise ValueError(
+                    "Payment means BIC is not allowed in the "
+                    f"{profile.PROFILE_NAME} profile."
+                )
 
 
 @dataclass
@@ -638,12 +663,14 @@ class PaymentTerms:
     due_date: datetime.date | None = None
     direct_debit_mandate_id: str | None = None
 
-    def verify_basic(self) -> None:
-        if self.description is not None:
-            raise ValueError(
-                "Payment terms description is not allowed in the "
-                "BASIC profile."
-            )
+    def validate(self, profile: type[BasicWLInvoice]) -> None:
+        """Validate the requirements for the given profile."""
+        if not issubclass(profile, EN16931Invoice):
+            if self.description is not None:
+                raise ValueError(
+                    "Payment terms description is not allowed in the "
+                    f"{profile.PROFILE_NAME} profile."
+                )
 
 
 @dataclass
@@ -678,9 +705,11 @@ class Tax:
                 "Invalid due date type code: {self.due_date_type_code}."
             )
 
-    def validate_basic(self) -> None:
-        """Validate the requirements for the BASIC profile."""
-        if self.tax_point_date is not None:
-            raise ValueError(
-                "Tax point date is not allowed in the BASIC profile."
-            )
+    def validate(self, profile: type[BasicWLInvoice]) -> None:
+        """Validate the requirements for the given profile."""
+        if not issubclass(profile, EN16931Invoice):
+            if self.tax_point_date is not None:
+                raise ValueError(
+                    "Tax point date is not allowed in the "
+                    f"{profile.PROFILE_NAME} profile."
+                )
