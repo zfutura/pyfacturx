@@ -40,8 +40,8 @@ __all__ = [
     "Tax",
     "TradeContact",
     "TradeParty",
-    "UnitAllowanceCharge",
     "LineAllowanceCharge",
+    "DocumentAllowanceCharge",
     "ProductCharacteristic",
     "ProductClassification",
     "PaymentMeans",
@@ -355,6 +355,9 @@ class BasicWLInvoice(MinimumInvoice):
     payee: TradeParty | None = None
     delivery_date: datetime.date | None = None
     billing_period: tuple[datetime.date, datetime.date] | None = None
+    specified_allowance_charges: Sequence[DocumentAllowanceCharge] = field(
+        default_factory=list
+    )
     doc_notes: list[IncludedNote] = field(default_factory=list)
     seller_tax_representative: TradeParty | None = None
     contract_referenced_doc_id: str | None = None
@@ -413,17 +416,8 @@ class BasicInvoice(BasicWLInvoice):
                         "EN 16931/COMFORT line items are not allowed in the "
                         "BASIC profile."
                     )
-                for allowance in li.total_allowance_charges:
-                    if allowance.percent is not None:
-                        raise ValueError(
-                            "Percentage-based allowances/charges are not "
-                            "allowed in the BASIC profile."
-                        )
-                    if allowance.basis_amount is not None:
-                        raise ValueError(
-                            "Basis amount-based allowances/charges are not "
-                            "allowed in the BASIC profile."
-                        )
+                for allowance in li.specified_allowance_charges:
+                    allowance.validate_basic()
 
 
 @dataclass
@@ -455,7 +449,7 @@ class LineItem:
 
     _: KW_ONLY
     basis_quantity: Quantity | None = None
-    total_allowance_charges: Sequence[LineAllowanceCharge] = field(
+    specified_allowance_charges: Sequence[LineAllowanceCharge] = field(
         default_factory=list
     )
 
@@ -469,7 +463,7 @@ class EN16931LineItem(LineItem):
     note: IncludedNote | None = None
     # (Unit price, optional basis quantity)
     gross_unit_price: tuple[Decimal, Quantity | None] | None = None
-    unit_allowance_charge: UnitAllowanceCharge | None = None
+    applied_allowance_charge: LineAllowanceCharge | None = None
     seller_assigned_id: str | None = None
     buyer_assigned_id: str | None = None
     product_characteristics: Sequence[ProductCharacteristic] = field(
@@ -489,7 +483,7 @@ class EN16931LineItem(LineItem):
                 "EN 16931/COMFORT profile."
             )
         if (
-            self.unit_allowance_charge is not None
+            self.applied_allowance_charge is not None
             and self.gross_unit_price is None
         ):
             raise ValueError(
@@ -526,14 +520,6 @@ class ProductClassification:
 
 
 @dataclass
-class UnitAllowanceCharge:
-    """A unit allowance or charge."""
-
-    actual_amount: Money
-    reason_code: AllowanceChargeCode | SpecialServiceCode | None = None
-
-
-@dataclass
 class LineAllowanceCharge:
     """An allowance or charge for a line item."""
 
@@ -558,6 +544,28 @@ class LineAllowanceCharge:
                 self.reason_code, (AllowanceChargeCode, NoneType)
             ):
                 raise ValueError("Allowance/charge requires a reason code.")
+
+    def validate_basic(self) -> None:
+        """Validate the requirements for the BASIC profile."""
+        if self.percent is not None:
+            raise ValueError(
+                "Percentage-based allowances/charges are not allowed in the "
+                "BASIC profile."
+            )
+        if self.basis_amount is not None:
+            raise ValueError(
+                "Basis amount-based allowances/charges are not allowed in the "
+                "BASIC profile."
+            )
+
+
+@dataclass
+class DocumentAllowanceCharge(LineAllowanceCharge):
+    """An allowance or charge for the entire invoice."""
+
+    _: KW_ONLY
+    tax_category: TaxCategoryCode = TaxCategoryCode.STANDARD_RATE
+    tax_rate: Decimal | None = None
 
 
 @dataclass
