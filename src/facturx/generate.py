@@ -44,6 +44,11 @@ from .type_codes import (
 )
 from .types import ID, Money, Quantity
 
+__all__ = [
+    "generate",
+    "generate_et",
+]
+
 #
 # XML Utility Functions
 #
@@ -195,7 +200,7 @@ def _generate_trade_contact(parent: ET.Element, contact: TradeContact) -> None:
 #
 
 
-def generate(invoice: MinimumInvoice) -> str:
+def generate_et(invoice: MinimumInvoice) -> ET.Element:
     root = ET.Element(
         "rsm:CrossIndustryInvoice",
         {
@@ -209,6 +214,11 @@ def generate(invoice: MinimumInvoice) -> str:
     _generate_doc(root, invoice)
     _generate_transaction(root, invoice)
 
+    return root
+
+
+def generate(invoice: MinimumInvoice) -> str:
+    root = generate_et(invoice)
     return ET.tostring(root, encoding="unicode", xml_declaration=True)
 
 

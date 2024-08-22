@@ -28,6 +28,28 @@ from .type_codes import (
 )
 from .types import ID, Attachment, Money, Quantity
 
+__all__ = [
+    "MinimumInvoice",
+    "BasicWLInvoice",
+    "BasicInvoice",
+    "EN16931Invoice",
+    "LineItem",
+    "EN16931LineItem",
+    "PostalAddress",
+    "ReferenceDocument",
+    "Tax",
+    "TradeContact",
+    "TradeParty",
+    "UnitAllowanceCharge",
+    "LineAllowanceCharge",
+    "ProductCharacteristic",
+    "ProductClassification",
+    "PaymentMeans",
+    "PaymentTerms",
+    "BankAccount",
+    "IncludedNote",
+]
+
 
 @dataclass
 class IncludedNote:
