@@ -229,7 +229,7 @@ def _generate_doc_context(parent: ET.Element, invoice: MinimumInvoice) -> None:
     guideline_el = ET.SubElement(
         doc_ctx, "ram:GuidelineSpecifiedDocumentContextParameter"
     )
-    ET.SubElement(guideline_el, "rsm:ID").text = invoice.PROFILE_URN
+    ET.SubElement(guideline_el, "ram:ID").text = invoice.PROFILE_URN
 
 
 def _generate_doc(parent: ET.Element, invoice: MinimumInvoice) -> None:
