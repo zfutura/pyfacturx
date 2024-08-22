@@ -21,3 +21,23 @@ in scope of this library, but currently not supported are:
 * Extended and XRechnung profiles.
 * Reading Factur-X files (XML or PDF).
 * Embedding the XML in PDF files.
+
+## Usage
+
+### Generating Factur-X XML
+
+PyFactur-X supports several profiles of Factur-X. First, you need to create
+an instance of the correct profile. Then, you can pass that instance to one
+of the generation functions.
+
+```python
+from datetime import date
+from pyfacturx import EN16931Invoice, generate
+
+invoice = EN16931Invoice(
+    invoice_number="2021-123",
+    invoice_date=date(2021, 4, 13),
+    ...  # See the class documentation for all required and optional fields.
+)
+xml_string = generate(invoice)
+```
