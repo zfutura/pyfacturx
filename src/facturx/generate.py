@@ -880,11 +880,11 @@ if __name__ == "__main__":
         seller,
         buyer,
         "EUR",
-        Decimal("10090.00"),
-        Decimal("10090.00"),
-        Decimal("19.00"),
-        Decimal("10089.00"),
-        Decimal("10089.00"),
+        tax_basis_total_amount=Decimal("10090.00"),
+        tax_total_amount=Decimal("19.00"),
+        grand_total_amount=Decimal("10089.00"),
+        due_payable_amount=Decimal("10089.00"),
+        line_total_amount=Decimal("10090.00"),
         tax=[
             Tax(
                 (Decimal("33.44"), "EUR"),

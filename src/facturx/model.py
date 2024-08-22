@@ -336,13 +336,14 @@ class MinimumInvoice:
     seller: TradeParty
     buyer: TradeParty
     currency_code: str
-    line_total_amount: Money | None
+
+    _: KW_ONLY
+
+    line_total_amount: Money | None = None
     tax_basis_total_amount: Money
     tax_total_amount: Money
     grand_total_amount: Money
     due_payable_amount: Money
-
-    _: KW_ONLY
 
     business_doc_ctx_uri: str | None = None
     buyer_reference: str | None = None
