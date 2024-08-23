@@ -7,11 +7,14 @@ from pathlib import Path
 import pytest
 
 from facturx.generate import generate_et
+from facturx.quantities import QuantityCode
 from facturx.type_codes import DocumentTypeCode, TaxCategoryCode
 
 from .model import (
+    BasicInvoice,
     BasicWLInvoice,
     IncludedNote,
+    LineItem,
     MinimumInvoice,
     PaymentTerms,
     PostalAddress,
@@ -99,11 +102,88 @@ Ihre Kundennummer: GE2020211
     )
 
 
+def basic_einfach() -> BasicInvoice:
+    return BasicInvoice(
+        invoice_number="471102",
+        type_code=DocumentTypeCode.INVOICE,
+        invoice_date=date(2020, 3, 5),
+        currency_code="EUR",
+        delivery_date=date(2020, 3, 5),
+        seller=TradeParty(
+            "Lieferant GmbH",
+            PostalAddress(
+                "DE", None, "80333", "München", "Lieferantenstraße 20"
+            ),
+            tax_number="201/113/40209",
+            vat_id="DE123456789",
+        ),
+        buyer=TradeParty(
+            "Kunden AG Mitte",
+            PostalAddress(
+                "DE",
+                None,
+                "69876",
+                "Frankfurt",
+                "Hans Muster",
+                "Kundenstraße 15",
+            ),
+        ),
+        line_items=[
+            LineItem(
+                "1",
+                """GTIN: 4012345001235
+Unsere Art.-Nr.: TB100A4
+Trennblätter A4
+        """,
+                Money("9.90", "EUR"),
+                (Decimal("20.0000"), QuantityCode.PIECE),
+                Money("198.00", "EUR"),
+                Decimal(19),
+                global_id=("4012345001235", "0160"),
+            ),
+        ],
+        line_total_amount=Money("198.00", "EUR"),
+        charge_total_amount=Money("0.00", "EUR"),
+        allowance_total_amount=Money("0.00", "EUR"),
+        tax_basis_total_amount=Money("198.00", "EUR"),
+        tax=[
+            Tax(
+                Money("37.62", "EUR"),
+                Money("198.00", "EUR"),
+                Decimal("19.00"),
+                TaxCategoryCode.STANDARD_RATE,
+            )
+        ],
+        tax_total_amount=Money("37.62", "EUR"),
+        grand_total_amount=Money("235.62", "EUR"),
+        due_payable_amount=Money("235.62", "EUR"),
+        payment_terms=PaymentTerms(due_date=date(2020, 4, 4)),
+        notes=[
+            IncludedNote("Rechnung gemäß Bestellung vom 01.03.2020."),
+            IncludedNote("""Lieferant GmbH\t\t\t\t
+Lieferantenstraße 20\t\t\t\t
+80333 München\t\t\t\t
+Deutschland\t\t\t\t
+Geschäftsführer: Hans Muster
+Handelsregisternummer: H A 123
+      """),
+            IncludedNote("""Unsere GLN: 4000001123452
+Ihre GLN: 4000001987658
+Ihre Kundennummer: GE2020211
+
+
+Zahlbar innerhalb 30 Tagen netto bis 04.04.2020, 3% Skonto innerhalb 10 Tagen bis 15.03.2020.
+      """),  # noqa: E501
+        ],
+    )
+
+
 @pytest.mark.parametrize(
     "invoice, filename",
     [
         (minimum_rechnung, "MINIMUM_Rechnung.xml"),
         (basic_wl_einfach, "BASIC-WL_Einfach.xml"),
+        (basic_einfach, "BASIC_Einfach.xml"),
     ],
 )
 def test_generate(

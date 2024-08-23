@@ -460,6 +460,7 @@ class EN16931Invoice(BasicInvoice):
 class LineItem:
     """Line item data used in the BASIC profile."""
 
+    id: str
     name: str
     net_price: Money
     billed_quantity: Quantity

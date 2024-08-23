@@ -299,35 +299,30 @@ def _generate_transaction(parent: ET.Element, invoice: MinimumInvoice) -> None:
     transaction_el = ET.SubElement(parent, "rsm:SupplyChainTradeTransaction")
     if isinstance(invoice, BasicInvoice):
         assert len(invoice.line_items) >= 1  # BG-25
-        for idx, li in enumerate(invoice.line_items, start=1):
-            _generate_line_item(transaction_el, invoice, li, idx)
+        for li in invoice.line_items:
+            _generate_line_item(transaction_el, invoice, li)
     _generate_trade_agreement(transaction_el, invoice)
     _generate_delivery(transaction_el, invoice)
     _generate_settlement(transaction_el, invoice)
 
 
 def _generate_line_item(
-    parent: ET.Element,
-    invoice: BasicInvoice,
-    line_item: LineItem,
-    index: int,
+    parent: ET.Element, invoice: BasicInvoice, line_item: LineItem
 ) -> None:
     li_el = ET.SubElement(
         parent,
         "ram:IncludedSupplyChainTradeLineItem",
     )
-    _generate_line_item_doc(li_el, line_item, index)
+    _generate_line_item_doc(li_el, line_item)
     _generate_line_item_product(li_el, line_item)
-    _generate_line_trade_agreement(li_el, line_item)
+    _generate_line_trade_agreement(li_el, invoice, line_item)
     _generate_line_delivery(li_el, line_item)
     _generate_line_settlement(li_el, invoice, line_item)
 
 
-def _generate_line_item_doc(
-    parent: ET.Element, line_item: LineItem, index: int
-) -> None:
+def _generate_line_item_doc(parent: ET.Element, line_item: LineItem) -> None:
     li_doc = ET.SubElement(parent, "ram:AssociatedDocumentLineDocument")
-    ET.SubElement(li_doc, "ram:LineID").text = str(index)
+    ET.SubElement(li_doc, "ram:LineID").text = line_item.id
     if isinstance(line_item, EN16931LineItem) and line_item.note is not None:
         _note_element(li_doc, line_item.note)
 
@@ -379,7 +374,7 @@ def _generate_product_classification(
 
 
 def _generate_line_trade_agreement(
-    parent: ET.Element, line_item: LineItem
+    parent: ET.Element, invoice: BasicInvoice, line_item: LineItem
 ) -> None:
     agreement = ET.SubElement(parent, "ram:SpecifiedLineTradeAgreement")
     if isinstance(line_item, EN16931LineItem):
@@ -896,6 +891,7 @@ if __name__ == "__main__":
         ],
         line_items=[
             LineItem(
+                "1",
                 "Fixed amount item\nWith multiple lines",
                 Money("10000.00", "EUR"),
                 (Decimal(1), QuantityCode.PIECE),
@@ -903,6 +899,7 @@ if __name__ == "__main__":
                 Decimal("19"),
             ),
             EN16931LineItem(
+                "2",
                 "Hourly item",
                 Money("30.00", "EUR"),
                 (Decimal(3), QuantityCode.HOUR),
