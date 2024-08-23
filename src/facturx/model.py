@@ -14,6 +14,7 @@ from .const import (
     URN_MINIMUM_PROFILE,
 )
 from .countries import validate_iso_3166_1_alpha_2
+from .money import Money, validate_iso_4217_currency
 from .type_codes import (
     AllowanceChargeCode,
     DocumentTypeCode,
@@ -26,7 +27,7 @@ from .type_codes import (
     TextSubjectCode,
     VATExemptionCode,
 )
-from .types import ID, Attachment, DocRef, Money, Quantity
+from .types import ID, Attachment, DocRef, Quantity
 
 __all__ = [
     "MinimumInvoice",
@@ -354,6 +355,7 @@ class MinimumInvoice:
             raise ValueError(f"Invalid invoice type code: {self.type_code}.")
         self.seller.validate(type(self), which="seller")
         self.buyer.validate(type(self), which="buyer")
+        validate_iso_4217_currency(self.currency_code)
 
 
 @dataclass

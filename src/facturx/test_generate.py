@@ -1,7 +1,6 @@
 import xml.etree.ElementTree as ET
 from collections.abc import Callable
 from datetime import date
-from decimal import Decimal
 from pathlib import Path
 
 import pytest
@@ -10,6 +9,7 @@ from facturx.generate import generate_et
 from facturx.type_codes import DocumentTypeCode
 
 from .model import MinimumInvoice, PostalAddress, TradeParty
+from .money import Money
 
 
 def minimum_rechnung() -> MinimumInvoice:
@@ -25,10 +25,10 @@ def minimum_rechnung() -> MinimumInvoice:
         ),
         buyer=TradeParty("Kunden AG Frankreich", None),
         currency_code="EUR",
-        tax_basis_total_amount=Decimal("198.00"),
-        tax_total_amount=Decimal("37.62"),
-        grand_total_amount=Decimal("235.62"),
-        due_payable_amount=Decimal("235.62"),
+        tax_basis_total_amount=Money("198.00", "EUR"),
+        tax_total_amount=Money("37.62", "EUR"),
+        grand_total_amount=Money("235.62", "EUR"),
+        due_payable_amount=Money("235.62", "EUR"),
     )
 
 

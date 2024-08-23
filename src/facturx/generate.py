@@ -10,8 +10,6 @@ import xml.etree.ElementTree as ET
 from base64 import b64encode
 from decimal import Decimal
 
-from facturx.quantities import QuantityCode
-
 from .const import NS_CII, NS_RAM, NS_UDT
 from .model import (
     BasicInvoice,
@@ -33,6 +31,8 @@ from .model import (
     TradeContact,
     TradeParty,
 )
+from .money import Money
+from .quantities import QuantityCode
 from .type_codes import (
     AllowanceChargeCode,
     DocumentTypeCode,
@@ -42,7 +42,7 @@ from .type_codes import (
     TaxCategoryCode,
     TextSubjectCode,
 )
-from .types import ID, DocRef, Money, Quantity
+from .types import ID, DocRef, Quantity
 
 __all__ = [
     "generate",
@@ -93,16 +93,10 @@ def _currency_element(
     *,
     with_currency: bool = False,
 ) -> ET.Element:
-    if isinstance(amount, Decimal):
-        am = amount
-        currency = default_currency
-    else:
-        am, currency = amount
-
     el = ET.SubElement(parent, name)
-    if with_currency or currency != default_currency:
-        el.set("currencyID", currency)
-    el.text = str(am)
+    if with_currency or amount.currency != default_currency:
+        el.set("currencyID", amount.currency)
+    el.text = str(amount.amount)
     return el
 
 
@@ -878,15 +872,15 @@ if __name__ == "__main__":
         seller,
         buyer,
         "EUR",
-        tax_basis_total_amount=Decimal("10090.00"),
-        tax_total_amount=Decimal("19.00"),
-        grand_total_amount=Decimal("10089.00"),
-        due_payable_amount=Decimal("10089.00"),
-        line_total_amount=Decimal("10090.00"),
+        tax_basis_total_amount=Money("10090.00", "EUR"),
+        tax_total_amount=Money("19.00", "EUR"),
+        grand_total_amount=Money("10089.00", "EUR"),
+        due_payable_amount=Money("10089.00", "EUR"),
+        line_total_amount=Money("10090.00", "EUR"),
         tax=[
             Tax(
-                (Decimal("33.44"), "EUR"),
-                (Decimal("1000.00"), "EUR"),
+                Money("33.44", "EUR"),
+                Money("1000.00", "EUR"),
                 Decimal(19),
                 TaxCategoryCode.STANDARD_RATE,
             ),
@@ -901,16 +895,16 @@ if __name__ == "__main__":
         line_items=[
             LineItem(
                 "Fixed amount item\nWith multiple lines",
-                (Decimal("10000.00"), "EUR"),
+                Money("10000.00", "EUR"),
                 (Decimal(1), QuantityCode.PIECE),
-                (Decimal("10000.00"), "EUR"),
+                Money("10000.00", "EUR"),
                 Decimal("19"),
             ),
             EN16931LineItem(
                 "Hourly item",
-                (Decimal("30.00"), "EUR"),
+                Money("30.00", "EUR"),
                 (Decimal(3), QuantityCode.HOUR),
-                (Decimal("90.00"), "EUR"),
+                Money("90.00", "EUR"),
                 Decimal("19"),
                 global_id=("9781529044195", "0160"),
                 basis_quantity=(Decimal(1), QuantityCode.HOUR),
@@ -936,19 +930,17 @@ if __name__ == "__main__":
                     (Decimal(1), QuantityCode.HOUR),
                 ),
                 applied_allowance_charge=LineAllowanceCharge(
-                    (Decimal("10.00"), "EUR"),
+                    Money("10.00", "EUR"),
                     reason_code=AllowanceChargeCode.AHEAD_OF_SCHEDULE,
                 ),
                 specified_allowance_charges=[
+                    LineAllowanceCharge(Money("0.05", "EUR"), surcharge=True),
                     LineAllowanceCharge(
-                        (Decimal("0.05"), "EUR"), surcharge=True
-                    ),
-                    LineAllowanceCharge(
-                        (Decimal("1.00"), "EUR"),
+                        Money("1.00", "EUR"),
                         surcharge=False,
                         reason_code=AllowanceChargeCode.AHEAD_OF_SCHEDULE,
                         reason="Ahead of schedule",
-                        basis_amount=(Decimal("20.00"), "EUR"),
+                        basis_amount=Money("20.00", "EUR"),
                         percent=Decimal("5"),
                     ),
                 ],

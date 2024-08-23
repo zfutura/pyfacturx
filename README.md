@@ -32,11 +32,12 @@ of the generation functions.
 
 ```python
 from datetime import date
-from pyfacturx import EN16931Invoice, generate
+from pyfacturx import EN16931Invoice, Money, generate
 
 invoice = EN16931Invoice(
     invoice_number="2021-123",
     invoice_date=date(2021, 4, 13),
+    grand_total=Money("100.00", "EUR"),
     ...  # See the class documentation for all required and optional fields.
 )
 xml_string = generate(invoice)
