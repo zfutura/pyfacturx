@@ -38,6 +38,9 @@ select = ["E", "F", "B", "I"]
 [tool.ruff.lint.isort]
 combine-as-imports = true
 
+[tool.mypy]
+strict = true
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

@@ -35,7 +35,9 @@ def minimum_rechnung() -> MinimumInvoice:
 @pytest.mark.parametrize(
     "invoice, filename", [(minimum_rechnung, "MINIMUM_Rechnung.xml")]
 )
-def test_generate(invoice: Callable[[], MinimumInvoice], filename: str):
+def test_generate(
+    invoice: Callable[[], MinimumInvoice], filename: str
+) -> None:
     our_xml = _generate_xml(invoice())
     their_xml = _read_xml(filename)
     assert our_xml == their_xml
