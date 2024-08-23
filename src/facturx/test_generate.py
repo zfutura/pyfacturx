@@ -8,7 +8,11 @@ import pytest
 
 from facturx.generate import generate_et
 from facturx.quantities import QuantityCode
-from facturx.type_codes import DocumentTypeCode, TaxCategoryCode
+from facturx.type_codes import (
+    DocumentTypeCode,
+    IdentifierSchemeCode,
+    TaxCategoryCode,
+)
 
 from .model import (
     BasicInvoice,
@@ -139,7 +143,7 @@ Trennblätter A4
                 (Decimal("20.0000"), QuantityCode.PIECE),
                 Money("198.00", "EUR"),
                 Decimal(19),
-                global_id=("4012345001235", "0160"),
+                global_id=("4012345001235", IdentifierSchemeCode.GTIN),
             ),
         ],
         line_total_amount=Money("198.00", "EUR"),

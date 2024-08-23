@@ -5,6 +5,12 @@ UNTDID type codes, maintained by UN/CEFACT.
 from enum import IntEnum, StrEnum
 
 
+class IdentifierSchemeCode(StrEnum):
+    """Selected identifier scheme codes defined in ISO/IEC 6523."""
+
+    GTIN = "0160"
+
+
 class DocumentTypeCode(IntEnum):
     """Selected document type codes defined in UNTDID 1001.
 

@@ -4,11 +4,11 @@ from decimal import Decimal
 from typing import TypeAlias
 
 from .quantities import QuantityCode
-from .type_codes import ReferenceQualifierCode
+from .type_codes import IdentifierSchemeCode, ReferenceQualifierCode
 
 # (ID, scheme ID)
 # The scheme ID must be from the ISO/IEC 6523 list.
-ID: TypeAlias = tuple[str, str]
+ID: TypeAlias = tuple[str, IdentifierSchemeCode | str]
 Quantity: TypeAlias = tuple[Decimal, QuantityCode]
 # (content, mime type, filename)
 Attachment: TypeAlias = tuple[bytes, str, str]
