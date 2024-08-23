@@ -489,7 +489,7 @@ class EN16931LineItem(LineItem):
     description: str | None = None
     note: IncludedNote | None = None
     # (Unit price, optional basis quantity)
-    gross_unit_price: tuple[Decimal, Quantity | None] | None = None
+    gross_unit_price: tuple[Money, Quantity | None] | None = None
     applied_allowance_charge: LineAllowanceCharge | None = None
     seller_assigned_id: str | None = None
     buyer_assigned_id: str | None = None

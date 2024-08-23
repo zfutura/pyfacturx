@@ -333,7 +333,6 @@ def _generate_line_item_product(
     el = ET.SubElement(parent, "ram:SpecifiedTradeProduct")
     if line_item.global_id is not None:
         _scheme_id_element(el, "ram:GlobalID", line_item.global_id)
-    ET.SubElement(el, "ram:Name").text = line_item.name
     if isinstance(line_item, EN16931LineItem):
         if line_item.seller_assigned_id is not None:
             ET.SubElement(
@@ -343,6 +342,8 @@ def _generate_line_item_product(
             ET.SubElement(
                 el, "ram:BuyerAssignedID"
             ).text = line_item.buyer_assigned_id
+    ET.SubElement(el, "ram:Name").text = line_item.name
+    if isinstance(line_item, EN16931LineItem):
         if line_item.description is not None:
             ET.SubElement(el, "ram:Description").text = line_item.description
         for characteristic in line_item.product_characteristics:
@@ -390,7 +391,9 @@ def _generate_line_trade_agreement(
             price_el = ET.SubElement(
                 agreement, "ram:GrossPriceProductTradePrice"
             )
-            ET.SubElement(price_el, "ram:ChargeAmount").text = str(price)
+            _currency_element(
+                price_el, "ram:ChargeAmount", price, invoice.currency_code
+            )
             if quantity is not None:
                 _quantity_element(price_el, "ram:BasisQuantity", quantity)
             if line_item.applied_allowance_charge is not None:
@@ -925,7 +928,7 @@ if __name__ == "__main__":
                 origin_country="DE",
                 buyer_order_ref_doc_id="BUY-DOC",
                 gross_unit_price=(
-                    Decimal("40.00"),
+                    Money("40.00", "EUR"),
                     (Decimal(1), QuantityCode.HOUR),
                 ),
                 applied_allowance_charge=LineAllowanceCharge(

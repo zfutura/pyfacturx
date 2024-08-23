@@ -8,6 +8,7 @@ from enum import IntEnum, StrEnum
 class IdentifierSchemeCode(StrEnum):
     """Selected identifier scheme codes defined in ISO/IEC 6523."""
 
+    GLN = "0088"  # Global Location Number, aka GS1/EAN location number
     GTIN = "0160"
 
 
