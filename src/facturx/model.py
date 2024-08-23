@@ -378,7 +378,7 @@ class BasicWLInvoice(MinimumInvoice):
     specified_allowance_charges: Sequence[DocumentAllowanceCharge] = field(
         default_factory=list
     )
-    doc_notes: list[IncludedNote] = field(default_factory=list)
+    notes: list[IncludedNote] = field(default_factory=list)
     seller_tax_representative: TradeParty | None = None
     contract_referenced_doc_id: str | None = None
     ship_to: TradeParty | None = None

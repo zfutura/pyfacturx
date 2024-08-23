@@ -291,7 +291,7 @@ def _generate_doc(parent: ET.Element, invoice: MinimumInvoice) -> None:
     ET.SubElement(doc, "ram:TypeCode").text = str(invoice.type_code)
     _date_element(doc, "ram:IssueDateTime", invoice.invoice_date)
     if isinstance(invoice, BasicWLInvoice):
-        for note in invoice.doc_notes:
+        for note in invoice.notes:
             _note_element(doc, note)
 
 
@@ -599,29 +599,29 @@ def _generate_referenced_doc(
 
 
 def _generate_delivery(parent: ET.Element, invoice: MinimumInvoice) -> None:
-    ET.SubElement(parent, "ram:ApplicableHeaderTradeDelivery")
+    delivery_el = ET.SubElement(parent, "ram:ApplicableHeaderTradeDelivery")
 
     if isinstance(invoice, BasicWLInvoice):
         if invoice.ship_to is not None:
             _generate_trade_party(
-                parent, "ram:ShipToTradeParty", invoice.ship_to
+                delivery_el, "ram:ShipToTradeParty", invoice.ship_to
             )
         if invoice.delivery_date is not None:
-            delivery_el = ET.SubElement(
-                parent, "ram:ActualDeliverySupplyChainEvent"
+            supply_el = ET.SubElement(
+                delivery_el, "ram:ActualDeliverySupplyChainEvent"
             )
             _date_element(
-                delivery_el, "ram:OccurrenceDateTime", invoice.delivery_date
+                supply_el, "ram:OccurrenceDateTime", invoice.delivery_date
             )
         if invoice.despatch_advice_ref_doc_id is not None:
             _document_element(
-                parent,
+                delivery_el,
                 "ram:DespatchAdviceReferencedDocument",
                 invoice.despatch_advice_ref_doc_id,
             )
         if invoice.receiving_advice_ref_doc_id is not None:
             _document_element(
-                parent,
+                delivery_el,
                 "ram:ReceivingAdviceReferencedDocument",
                 invoice.receiving_advice_ref_doc_id,
             )
@@ -657,7 +657,7 @@ def _generate_settlement(parent: ET.Element, invoice: MinimumInvoice) -> None:
         for means in invoice.payment_means:
             _generate_payment_means(settlement_el, means)
         for tax in invoice.tax:
-            _generate_tax(settlement_el, tax)
+            _generate_tax(settlement_el, invoice, tax)
         if invoice.billing_period is not None:
             billing_period = ET.SubElement(
                 settlement_el, "ram:BillingSpecifiedPeriod"
@@ -729,7 +729,9 @@ def _generate_payment_means(parent: ET.Element, means: PaymentMeans) -> None:
         ET.SubElement(bic_el, "ram:BICID").text = means.payee_bic
 
 
-def _generate_tax(parent: ET.Element, tax: Tax) -> None:
+def _generate_tax(
+    parent: ET.Element, invoice: MinimumInvoice, tax: Tax
+) -> None:
     tax_el = ET.SubElement(parent, "ram:ApplicableTradeTax")
     _currency_element(
         tax_el,
@@ -886,7 +888,7 @@ if __name__ == "__main__":
             ),
         ],
         delivery_date=datetime.date(2024, 8, 21),
-        doc_notes=[
+        notes=[
             IncludedNote("This is a test invoice."),
             IncludedNote(
                 "This is seller note.", TextSubjectCode.COMMENTS_BY_SELLER
