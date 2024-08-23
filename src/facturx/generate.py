@@ -223,11 +223,10 @@ def generate_et(invoice: MinimumInvoice) -> ET.Element:
     ...         TradeParty("Seller GmbH", PostalAddress("DE")),
     ...         TradeParty("Buyer AG", PostalAddress("DE")),
     ...         "EUR",
-    ...         (Decimal("10000.00"), "EUR"),
-    ...         (Decimal("10000.00"), "EUR"),
-    ...         (Decimal("1900.00"), "EUR"),
-    ...         (Decimal("11900.00"), "EUR"),
-    ...         (Decimal("11900.00"), "EUR"),
+    ...         tax_basis_total_amount=(Decimal("10000.00"), "EUR"),
+    ...         tax_total_amount=(Decimal("1900.00"), "EUR"),
+    ...         grand_total_amount=(Decimal("11900.00"), "EUR"),
+    ...         due_payable_amount=(Decimal("11900.00"), "EUR"),
     ... )
     >>> root = generate_et(invoice)
     """
@@ -264,11 +263,10 @@ def generate(invoice: MinimumInvoice) -> str:
     ...         TradeParty("Seller GmbH", PostalAddress("DE")),
     ...         TradeParty("Buyer AG", PostalAddress("DE")),
     ...         "EUR",
-    ...         (Decimal("10000.00"), "EUR"),
-    ...         (Decimal("10000.00"), "EUR"),
-    ...         (Decimal("1900.00"), "EUR"),
-    ...         (Decimal("11900.00"), "EUR"),
-    ...         (Decimal("11900.00"), "EUR"),
+    ...         tax_basis_total_amount=(Decimal("10000.00"), "EUR"),
+    ...         tax_total_amount=(Decimal("1900.00"), "EUR"),
+    ...         grand_total_amount=(Decimal("11900.00"), "EUR"),
+    ...         due_payable_amount=(Decimal("11900.00"), "EUR"),
     ... )
     >>> xml_string = generate(invoice)
     """
