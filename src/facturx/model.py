@@ -28,7 +28,7 @@ from .type_codes import (
     TextSubjectCode,
     VATExemptionCode,
 )
-from .types import ID, Attachment, DocRef, Quantity
+from .types import ID, Attachment, DocRef, OptionalQuantity, Quantity
 
 __all__ = [
     "MinimumInvoice",
@@ -42,8 +42,8 @@ __all__ = [
     "Tax",
     "TradeContact",
     "TradeParty",
-    "LineAllowanceCharge",
-    "DocumentAllowanceCharge",
+    "LineAllowanceOrCharge",
+    "DocumentAllowanceOrCharge",
     "ProductCharacteristic",
     "ProductClassification",
     "PaymentMeans",
@@ -101,6 +101,10 @@ class TradeParty:
                 )
 
         # ids and global_ids
+
+        for gid in self.global_ids:
+            if gid[1] is None:
+                raise ModelError("Global ID scheme ID is required.")
 
         if which in ("buyer", "ship to", "payee"):
             if issubclass(profile, BasicWLInvoice):
@@ -343,13 +347,13 @@ class MinimumInvoice:
 
     line_total_amount: Money | None = None
     tax_basis_total_amount: Money
-    tax_total_amount: Money
+    tax_total_amounts: list[Money]
     grand_total_amount: Money
     due_payable_amount: Money
 
-    business_doc_ctx_uri: str | None = None
+    business_process_id: str | None = None
     buyer_reference: str | None = None
-    buyer_order_ref_doc_id: str | None = None
+    buyer_order_id: str | None = None
 
     def __post_init__(self) -> None:
         if not self.type_code.is_invoice_type:
@@ -357,6 +361,12 @@ class MinimumInvoice:
         self.seller.validate(type(self), which="seller")
         self.buyer.validate(type(self), which="buyer")
         validate_iso_4217_currency(self.currency_code)
+        if type(self) is MinimumInvoice:
+            if len(self.tax_total_amounts) > 1:
+                raise ModelError(
+                    "Multiple tax total amounts are not allowed in the "
+                    "MINIMUM profile."
+                )
 
 
 @dataclass
@@ -376,19 +386,20 @@ class BasicWLInvoice(MinimumInvoice):
     payee: TradeParty | None = None
     delivery_date: datetime.date | None = None
     billing_period: tuple[datetime.date, datetime.date] | None = None
-    specified_allowance_charges: Sequence[DocumentAllowanceCharge] = field(
+    allowances_and_charges: Sequence[DocumentAllowanceOrCharge] = field(
         default_factory=list
     )
     notes: list[IncludedNote] = field(default_factory=list)
     seller_tax_representative: TradeParty | None = None
-    contract_referenced_doc_id: str | None = None
+    contract_id: str | None = None
     ship_to: TradeParty | None = None
-    despatch_advice_ref_doc_id: str | None = None
-    receiving_advice_ref_doc_id: str | None = None
+    despatch_advice_id: str | None = None
     sepa_reference: str | None = None
     payment_reference: str | None = None
     payment_means: Sequence[PaymentMeans] = field(default_factory=list)
     payment_terms: PaymentTerms | None = None
+    preceding_invoice: tuple[str, datetime.date | None] | None = None
+    receiver_account_ids: Sequence[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         super().__post_init__()
@@ -412,6 +423,11 @@ class BasicWLInvoice(MinimumInvoice):
             means.validate(type(self))
         if self.payment_terms is not None:
             self.payment_terms.validate(type(self))
+        if len(self.tax_total_amounts) > 2:
+            raise ModelError(
+                "Multiple tax total amounts are not allowed in the "
+                f"{self.PROFILE_NAME} profile."
+            )
 
 
 @dataclass
@@ -437,6 +453,11 @@ class BasicInvoice(BasicWLInvoice):
                     )
         for li in self.line_items:
             li.validate(type(self))
+        if len(self.receiver_account_ids) > 1:
+            raise ModelError(
+                "Multiple accounting reference IDs are not allowed in the "
+                f"{self.PROFILE_NAME} profile."
+            )
 
 
 @dataclass
@@ -448,13 +469,12 @@ class EN16931Invoice(BasicInvoice):
 
     _: KW_ONLY
 
+    receiving_advice_id: str | None = None
     rounding_amount: Money | None = None
-    seller_order_ref_doc_id: str | None = None
+    seller_order_id: str | None = None
     referenced_docs: Sequence[ReferenceDocument] = field(default_factory=list)
     procuring_project: tuple[str, str] | None = None
     tax_currency_code: str | None = None
-    trade_account_id: str | None = None
-    ref_doc: DocRef | None = None
 
 
 @dataclass
@@ -466,19 +486,19 @@ class LineItem:
     net_price: Money
     billed_quantity: Quantity
     billed_total: Money
-    tax_rate: Decimal
+    tax_rate: Decimal | None
     tax_category: TaxCategoryCode = TaxCategoryCode.STANDARD_RATE
     global_id: ID | None = None
 
     _: KW_ONLY
-    basis_quantity: Quantity | None = None
-    specified_allowance_charges: Sequence[LineAllowanceCharge] = field(
+    basis_quantity: OptionalQuantity | None = None
+    allowances_and_charges: Sequence[LineAllowanceOrCharge] = field(
         default_factory=list
     )
 
     def validate(self, profile: type[BasicInvoice]) -> None:
         """Validate the requirements for the given profile."""
-        for allowance in self.specified_allowance_charges:
+        for allowance in self.allowances_and_charges:
             allowance.validate(profile)
 
 
@@ -490,8 +510,8 @@ class EN16931LineItem(LineItem):
     description: str | None = None
     note: IncludedNote | None = None
     # (Unit price, optional basis quantity)
-    gross_unit_price: tuple[Money, Quantity | None] | None = None
-    applied_allowance_charge: LineAllowanceCharge | None = None
+    gross_unit_price: tuple[Money, OptionalQuantity | None] | None = None
+    gross_allowance_or_charge: LineAllowanceOrCharge | None = None
     seller_assigned_id: str | None = None
     buyer_assigned_id: str | None = None
     product_characteristics: Sequence[ProductCharacteristic] = field(
@@ -501,9 +521,9 @@ class EN16931LineItem(LineItem):
         default_factory=list
     )
     origin_country: str | None = None
-    buyer_order_ref_doc_id: str | None = None
+    buyer_order_line_id: str | None = None
     billing_period: tuple[datetime.date, datetime.date] | None = None
-    ref_docs: Sequence[DocRef] = field(default_factory=list)
+    doc_ref: DocRef | None = None
     trade_account_id: str | None = None
 
     def __post_init__(self) -> None:
@@ -513,7 +533,7 @@ class EN16931LineItem(LineItem):
                 "EN 16931/COMFORT profile."
             )
         if (
-            self.applied_allowance_charge is not None
+            self.gross_allowance_or_charge is not None
             and self.gross_unit_price is None
         ):
             raise ModelError(
@@ -550,7 +570,7 @@ class ProductClassification:
 
 
 @dataclass
-class LineAllowanceCharge:
+class LineAllowanceOrCharge:
     """An allowance or charge for a line item."""
 
     actual_amount: Money
@@ -591,7 +611,7 @@ class LineAllowanceCharge:
 
 
 @dataclass
-class DocumentAllowanceCharge(LineAllowanceCharge):
+class DocumentAllowanceOrCharge(LineAllowanceOrCharge):
     """An allowance or charge for the entire invoice."""
 
     _: KW_ONLY
@@ -664,7 +684,7 @@ class PaymentTerms:
     """Payment terms data used in invoices."""
 
     _: KW_ONLY
-    description: str | None = None
+    description: str | None = None  # EN16931+
     due_date: datetime.date | None = None
     direct_debit_mandate_id: str | None = None
 
@@ -693,7 +713,7 @@ class Tax:
 
     calculated_amount: Money
     basis_amount: Money
-    rate_percent: Decimal
+    rate_percent: Decimal | None
     category_code: TaxCategoryCode = TaxCategoryCode.STANDARD_RATE
     _: KW_ONLY
     exemption_reason: str | None = None

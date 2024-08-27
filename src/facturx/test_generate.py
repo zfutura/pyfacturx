@@ -45,7 +45,7 @@ def minimum_rechnung() -> MinimumInvoice:
         buyer=TradeParty("Kunden AG Frankreich", None),
         currency_code="EUR",
         tax_basis_total_amount=Money("198.00", "EUR"),
-        tax_total_amount=Money("37.62", "EUR"),
+        tax_total_amounts=[Money("37.62", "EUR")],
         grand_total_amount=Money("235.62", "EUR"),
         due_payable_amount=Money("235.62", "EUR"),
     )
@@ -88,7 +88,7 @@ def basic_wl_einfach() -> BasicWLInvoice:
                 TaxCategoryCode.STANDARD_RATE,
             )
         ],
-        tax_total_amount=Money("1.18", "EUR"),
+        tax_total_amounts=[Money("1.18", "EUR")],
         grand_total_amount=Money("18.08", "EUR"),
         due_payable_amount=Money("18.08", "EUR"),
         payment_terms=PaymentTerms(due_date=date(2019, 11, 29)),
@@ -161,7 +161,7 @@ Trennblätter A4
                 TaxCategoryCode.STANDARD_RATE,
             )
         ],
-        tax_total_amount=Money("37.62", "EUR"),
+        tax_total_amounts=[Money("37.62", "EUR")],
         grand_total_amount=Money("235.62", "EUR"),
         due_payable_amount=Money("235.62", "EUR"),
         payment_terms=PaymentTerms(due_date=date(2020, 4, 4)),
@@ -255,7 +255,7 @@ def en16931_einfach() -> EN16931Invoice:
                 TaxCategoryCode.STANDARD_RATE,
             ),
         ],
-        tax_total_amount=Money("56.87", "EUR"),
+        tax_total_amounts=[Money("56.87", "EUR")],
         grand_total_amount=Money("529.87", "EUR"),
         prepaid_amount=Money("0.00", "EUR"),
         due_payable_amount=Money("529.87", "EUR"),

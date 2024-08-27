@@ -14,11 +14,11 @@ from .const import NS_CII, NS_RAM, NS_UDT
 from .model import (
     BasicInvoice,
     BasicWLInvoice,
-    DocumentAllowanceCharge,
+    DocumentAllowanceOrCharge,
     EN16931Invoice,
     EN16931LineItem,
     IncludedNote,
-    LineAllowanceCharge,
+    LineAllowanceOrCharge,
     LineItem,
     MinimumInvoice,
     PaymentMeans,
@@ -42,7 +42,7 @@ from .type_codes import (
     TaxCategoryCode,
     TextSubjectCode,
 )
-from .types import ID, DocRef, Quantity
+from .types import ID, DocRef, OptionalQuantity, Quantity
 
 __all__ = [
     "generate",
@@ -80,7 +80,10 @@ def _id_element(parent: ET.Element, name: str, id: str) -> ET.Element:
 
 
 def _scheme_id_element(parent: ET.Element, name: str, id: ID) -> ET.Element:
-    el = ET.SubElement(parent, name, {"schemeID": id[1]})
+    attrs: dict[str, str] = {}
+    if id[1] is not None:
+        attrs["schemeID"] = id[1]
+    el = ET.SubElement(parent, name, attrs)
     el.text = id[0]
     return el
 
@@ -101,10 +104,14 @@ def _currency_element(
 
 
 def _quantity_element(
-    parent: ET.Element, name: str, quantity: Quantity
+    parent: ET.Element, name: str, quantity: Quantity | OptionalQuantity
 ) -> ET.Element:
-    el = ET.SubElement(parent, name, unitCode=str(quantity[1]))
-    el.text = str(quantity[0])
+    q, unit = quantity
+    attribs: dict[str, str] = {}
+    if unit is not None:
+        attribs["unitCode"] = unit
+    el = ET.SubElement(parent, name, attribs)
+    el.text = str(q)
     return el
 
 
@@ -271,13 +278,11 @@ def generate(invoice: MinimumInvoice) -> str:
 
 def _generate_doc_context(parent: ET.Element, invoice: MinimumInvoice) -> None:
     doc_ctx = ET.SubElement(parent, "rsm:ExchangedDocumentContext")
-    if invoice.business_doc_ctx_uri is not None:
+    if invoice.business_process_id is not None:
         business_el = ET.SubElement(
             doc_ctx, "ram:BusinessProcessSpecifiedDocumentContextParameter"
         )
-        ET.SubElement(
-            business_el, "ram:ID"
-        ).text = invoice.business_doc_ctx_uri
+        ET.SubElement(business_el, "ram:ID").text = invoice.business_process_id
     # Specify the used profile.
     guideline_el = ET.SubElement(
         doc_ctx, "ram:GuidelineSpecifiedDocumentContextParameter"
@@ -379,13 +384,13 @@ def _generate_line_trade_agreement(
 ) -> None:
     agreement = ET.SubElement(parent, "ram:SpecifiedLineTradeAgreement")
     if isinstance(line_item, EN16931LineItem):
-        if line_item.buyer_order_ref_doc_id is not None:
+        if line_item.buyer_order_line_id is not None:
             doc_el = ET.SubElement(
                 agreement, "ram:BuyerOrderReferencedDocument"
             )
             ET.SubElement(
                 doc_el, "ram:LineID"
-            ).text = line_item.buyer_order_ref_doc_id
+            ).text = line_item.buyer_order_line_id
         if line_item.gross_unit_price is not None:
             price, quantity = line_item.gross_unit_price
             price_el = ET.SubElement(
@@ -396,12 +401,12 @@ def _generate_line_trade_agreement(
             )
             if quantity is not None:
                 _quantity_element(price_el, "ram:BasisQuantity", quantity)
-            if line_item.applied_allowance_charge is not None:
+            if line_item.gross_allowance_or_charge is not None:
                 _generate_allowance_charge(
                     price_el,
                     "ram:AppliedTradeAllowanceCharge",
                     invoice,
-                    line_item.applied_allowance_charge,
+                    line_item.gross_allowance_or_charge,
                 )
     price_el = ET.SubElement(agreement, "ram:NetPriceProductTradePrice")
     _currency_element(
@@ -430,9 +435,10 @@ def _generate_line_settlement(
     tax = ET.SubElement(settlement, "ram:ApplicableTradeTax")
     ET.SubElement(tax, "ram:TypeCode").text = "VAT"
     ET.SubElement(tax, "ram:CategoryCode").text = line_item.tax_category
-    ET.SubElement(tax, "ram:RateApplicablePercent").text = str(
-        line_item.tax_rate
-    )
+    if line_item.tax_rate is not None:
+        ET.SubElement(tax, "ram:RateApplicablePercent").text = str(
+            line_item.tax_rate
+        )
     if isinstance(line_item, EN16931LineItem):
         if line_item.billing_period is not None:
             start, end = line_item.billing_period
@@ -440,7 +446,7 @@ def _generate_line_settlement(
             period_el = ET.SubElement(settlement, "ram:BillingSpecifiedPeriod")
             _date_element(period_el, "ram:StartDateTime", start)
             _date_element(period_el, "ram:EndDateTime", end)
-    for allowance in line_item.specified_allowance_charges:
+    for allowance in line_item.allowances_and_charges:
         _generate_allowance_charge(
             settlement, "ram:SpecifiedTradeAllowanceCharge", invoice, allowance
         )
@@ -455,10 +461,20 @@ def _generate_line_settlement(
         invoice.currency_code,
     )
     if isinstance(line_item, EN16931LineItem):
-        for doc in line_item.ref_docs:
-            _generate_referenced_document(settlement, doc)
+        if line_item.doc_ref is not None:
+            _generate_referenced_document(settlement, line_item.doc_ref)
         if line_item.trade_account_id is not None:
             _generate_trade_account(settlement, line_item.trade_account_id)
+
+
+def _generate_preceding_invoice(
+    parent: ET.Element, doc: tuple[str, datetime.date | None]
+) -> None:
+    id, date = doc
+    doc_el = ET.SubElement(parent, "ram:InvoiceReferencedDocument")
+    ET.SubElement(doc_el, "ram:IssuerAssignedID").text = id
+    if date is not None:
+        _date_element(doc_el, "ram:FormattedIssueDateTime", date)
 
 
 def _generate_referenced_document(parent: ET.Element, doc: DocRef) -> None:
@@ -474,17 +490,14 @@ def _generate_referenced_document(parent: ET.Element, doc: DocRef) -> None:
 
 
 def _generate_trade_account(parent: ET.Element, id: str) -> None:
-    account_el = ET.SubElement(
-        parent, "ram:ReceivableSpecifiedTradeAccountingAccount"
-    )
-    ET.SubElement(account_el, "ram:ID").text = id
+    _id_element(parent, "ram:ReceivableSpecifiedTradeAccountingAccount", id)
 
 
 def _generate_allowance_charge(
     parent: ET.Element,
     name: str,
     invoice: BasicWLInvoice,
-    allowance: LineAllowanceCharge,
+    allowance: LineAllowanceOrCharge,
 ) -> None:
     allowance_et = ET.SubElement(parent, name)
     charge_el = ET.SubElement(allowance_et, "ram:ChargeIndicator")
@@ -514,7 +527,7 @@ def _generate_allowance_charge(
         )
     if allowance.reason is not None:
         ET.SubElement(allowance_et, "ram:Reason").text = allowance.reason
-    if isinstance(allowance, DocumentAllowanceCharge):
+    if isinstance(allowance, DocumentAllowanceOrCharge):
         tax_el = ET.SubElement(allowance_et, "ram:CategoryTradeTax")
         ET.SubElement(tax_el, "ram:TypeCode").text = "VAT"
         ET.SubElement(tax_el, "ram:CategoryCode").text = str(
@@ -549,18 +562,18 @@ def _generate_trade_agreement(
         _document_element(
             agreement_el,
             "ram:SellerOrderReferencedDocument",
-            invoice.seller_order_ref_doc_id,
+            invoice.seller_order_id,
         )
     _document_element(
         agreement_el,
         "ram:BuyerOrderReferencedDocument",
-        invoice.buyer_order_ref_doc_id,
+        invoice.buyer_order_id,
     )
     if isinstance(invoice, BasicWLInvoice):
         _document_element(
             agreement_el,
             "ram:ContractReferencedDocument",
-            invoice.contract_referenced_doc_id,
+            invoice.contract_id,
         )
     if isinstance(invoice, EN16931Invoice):
         for doc in invoice.referenced_docs:
@@ -611,17 +624,18 @@ def _generate_delivery(parent: ET.Element, invoice: MinimumInvoice) -> None:
             _date_element(
                 supply_el, "ram:OccurrenceDateTime", invoice.delivery_date
             )
-        if invoice.despatch_advice_ref_doc_id is not None:
+        if invoice.despatch_advice_id is not None:
             _document_element(
                 delivery_el,
                 "ram:DespatchAdviceReferencedDocument",
-                invoice.despatch_advice_ref_doc_id,
+                invoice.despatch_advice_id,
             )
-        if invoice.receiving_advice_ref_doc_id is not None:
+    if isinstance(invoice, EN16931Invoice):
+        if invoice.receiving_advice_id is not None:
             _document_element(
                 delivery_el,
                 "ram:ReceivingAdviceReferencedDocument",
-                invoice.receiving_advice_ref_doc_id,
+                invoice.receiving_advice_id,
             )
 
 
@@ -664,7 +678,7 @@ def _generate_settlement(parent: ET.Element, invoice: MinimumInvoice) -> None:
             _date_element(billing_period, "ram:StartDateTime", start)
             _date_element(billing_period, "ram:EndDateTime", end)
 
-        for allowance in invoice.specified_allowance_charges:
+        for allowance in invoice.allowances_and_charges:
             _generate_allowance_charge(
                 settlement_el,
                 "ram:SpecifiedTradeAllowanceCharge",
@@ -677,11 +691,13 @@ def _generate_settlement(parent: ET.Element, invoice: MinimumInvoice) -> None:
 
     _generate_summation(settlement_el, invoice)
 
-    if isinstance(invoice, EN16931Invoice):
-        if invoice.ref_doc is not None:
-            _generate_referenced_document(settlement_el, invoice.ref_doc)
-        if invoice.trade_account_id is not None:
-            _generate_trade_account(settlement_el, invoice.trade_account_id)
+    if (
+        isinstance(invoice, BasicWLInvoice)
+        and invoice.preceding_invoice is not None
+    ):
+        _generate_preceding_invoice(settlement_el, invoice.preceding_invoice)
+        for ref_id in invoice.receiver_account_ids:
+            _generate_trade_account(settlement_el, ref_id)
 
 
 def _generate_payment_means(parent: ET.Element, means: PaymentMeans) -> None:
@@ -756,9 +772,10 @@ def _generate_tax(
         ET.SubElement(tax_el, "ram:DueDateTypeCode").text = str(
             tax.due_date_type_code
         )
-    ET.SubElement(tax_el, "ram:RateApplicablePercent").text = str(
-        tax.rate_percent
-    )
+    if tax.rate_percent is not None:
+        ET.SubElement(tax_el, "ram:RateApplicablePercent").text = str(
+            tax.rate_percent
+        )
 
 
 def _generate_payment_terms(parent: ET.Element, terms: PaymentTerms) -> None:
@@ -805,13 +822,14 @@ def _generate_summation(parent: ET.Element, invoice: MinimumInvoice) -> None:
         invoice.tax_basis_total_amount,
         invoice.currency_code,
     )
-    _currency_element(
-        summation,
-        "ram:TaxTotalAmount",
-        invoice.tax_total_amount,
-        invoice.currency_code,
-        with_currency=True,
-    )
+    for amount in invoice.tax_total_amounts:
+        _currency_element(
+            summation,
+            "ram:TaxTotalAmount",
+            amount,
+            invoice.currency_code,
+            with_currency=True,
+        )
     if isinstance(invoice, EN16931Invoice):
         if invoice.rounding_amount is not None:
             _currency_element(
@@ -873,7 +891,7 @@ if __name__ == "__main__":
         buyer,
         "EUR",
         tax_basis_total_amount=Money("10090.00", "EUR"),
-        tax_total_amount=Money("19.00", "EUR"),
+        tax_total_amounts=[Money("19.00", "EUR")],
         grand_total_amount=Money("10089.00", "EUR"),
         due_payable_amount=Money("10089.00", "EUR"),
         line_total_amount=Money("10090.00", "EUR"),
@@ -926,18 +944,20 @@ if __name__ == "__main__":
                     ),
                 ],
                 origin_country="DE",
-                buyer_order_ref_doc_id="BUY-DOC",
+                buyer_order_line_id="BUY-DOC",
                 gross_unit_price=(
                     Money("40.00", "EUR"),
                     (Decimal(1), QuantityCode.HOUR),
                 ),
-                applied_allowance_charge=LineAllowanceCharge(
+                gross_allowance_or_charge=LineAllowanceOrCharge(
                     Money("10.00", "EUR"),
                     reason_code=AllowanceChargeCode.AHEAD_OF_SCHEDULE,
                 ),
-                specified_allowance_charges=[
-                    LineAllowanceCharge(Money("0.05", "EUR"), surcharge=True),
-                    LineAllowanceCharge(
+                allowances_and_charges=[
+                    LineAllowanceOrCharge(
+                        Money("0.05", "EUR"), surcharge=True
+                    ),
+                    LineAllowanceOrCharge(
                         Money("1.00", "EUR"),
                         surcharge=False,
                         reason_code=AllowanceChargeCode.AHEAD_OF_SCHEDULE,
@@ -950,13 +970,13 @@ if __name__ == "__main__":
                     datetime.date(2024, 8, 1),
                     datetime.date(2024, 8, 31),
                 ),
-                ref_docs=[("REFDOC-1", None)],
+                doc_ref=("REFDOC-1", None),
             ),
         ],
         buyer_reference="BUYER-1234",
-        seller_order_ref_doc_id="SELL-DOC",
-        buyer_order_ref_doc_id="BUY-DOC",
-        contract_referenced_doc_id="CONTRACT-123",
+        seller_order_id="SELL-DOC",
+        buyer_order_id="BUY-DOC",
+        contract_id="CONTRACT-123",
         referenced_docs=[
             ReferenceDocument(
                 "REFDOC-1", DocumentTypeCode.INVOICING_DATA_SHEET
