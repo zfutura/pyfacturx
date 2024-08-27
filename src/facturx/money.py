@@ -44,6 +44,9 @@ class Money:
             return True
         return NotImplemented
 
+    def __repr__(self) -> str:
+        return f"Money('{str(self.amount)}', {self.currency!r})"
+
 
 _ISO_4217_RE = re.compile(r"^[A-Z]{3}$")
 
