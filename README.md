@@ -14,12 +14,14 @@ electronic invoicing.
 See the [Factur-X website (French)](https://www.factur-x.org/) or
 [FeRD website (German)](https://www.ferd-net.de/) for more information.
 
-Currently, this library supports writing XML files according Factur-X Version
-1.0.06 (aka ZUGFeRD 2.2) in the profiles up to EN 16931 (Comfort). Generally
-in scope of this library, but currently not supported are:
+Currently, this library supports reading and writing XML files according to
+Factur-X Version 1.0.06 (aka ZUGFeRD 2.2) in the profiles up to EN 16931
+(Comfort).
+
+Generally in scope of this library, but currently not supported are:
 
 * Extended and XRechnung profiles.
-* Reading Factur-X files (XML or PDF).
+* Reading PDF Factur-X files.
 * Embedding the XML in PDF files.
 
 ## Usage
@@ -32,7 +34,7 @@ of the generation functions.
 
 ```python
 from datetime import date
-from pyfacturx import EN16931Invoice, Money, generate
+from facturx import EN16931Invoice, Money, generate
 
 invoice = EN16931Invoice(
     invoice_number="2021-123",
@@ -41,4 +43,15 @@ invoice = EN16931Invoice(
     ...  # See the class documentation for all required and optional fields.
 )
 xml_string = generate(invoice)
+```
+
+### Parsing Factur-X XML
+
+PyFactur-X can parse certain Factur-X XML files. The parser will return an
+instance of the correct profile.
+
+```python
+from facturx import parse_xml
+
+invoice = parse_xml(path_or_xml_string)  # MinimumInvoice or a subclass
 ```

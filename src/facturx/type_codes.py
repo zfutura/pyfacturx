@@ -4,6 +4,15 @@ UNTDID type codes, maintained by UN/CEFACT.
 
 from enum import IntEnum, StrEnum
 
+ALLOWED_MIME_TYPES = [
+    "application/pdf",
+    "image/png",
+    "image/jpeg",
+    "text/csv",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.oasis.opendocument.spreadsheet",
+]
+
 
 class IdentifierSchemeCode(StrEnum):
     """Selected identifier scheme codes defined in ISO/IEC 6523."""
