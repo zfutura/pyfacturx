@@ -14,6 +14,7 @@ from .const import (
     URN_MINIMUM_PROFILE,
 )
 from .countries import validate_iso_3166_1_alpha_2
+from .exc import ModelError
 from .money import Money, validate_iso_4217_currency
 from .type_codes import (
     AllowanceChargeCode,
@@ -94,7 +95,7 @@ class TradeParty:
 
         if which in ("seller tax representative", "ship to", "payee"):
             if not issubclass(profile, BasicWLInvoice):
-                raise ValueError(
+                raise ModelError(
                     f"{which.capitalize} is not allowed in the "
                     f"{profile.PROFILE_NAME} profile."
                 )
@@ -104,23 +105,23 @@ class TradeParty:
         if which in ("buyer", "ship to", "payee"):
             if issubclass(profile, BasicWLInvoice):
                 if len(self.ids) > 1:
-                    raise ValueError(
+                    raise ModelError(
                         f"Multiple {which} IDs are not allowed in the "
                         f"{profile.PROFILE_NAME} profile."
                     )
                 if len(self.global_ids) > 1:
-                    raise ValueError(
+                    raise ModelError(
                         f"Multiple {which} global IDs are not allowed in the "
                         f"{profile.PROFILE_NAME} profile."
                     )
             else:  # only relevant for "buyer"
                 if len(self.ids) > 0:
-                    raise ValueError(
+                    raise ModelError(
                         f"{which.capitalize()} IDs are not allowed in the "
                         f"{profile.PROFILE_NAME} profile."
                     )
                 if len(self.global_ids) > 0:
-                    raise ValueError(
+                    raise ModelError(
                         f"{which.capitalize()} global IDs are not allowed "
                         f"in the {profile.PROFILE_NAME} profile."
                     )
@@ -128,23 +129,23 @@ class TradeParty:
         elif which == "seller":
             if not issubclass(profile, BasicWLInvoice):
                 if len(self.ids) > 0:
-                    raise ValueError(
+                    raise ModelError(
                         "Seller IDs are not allowed in the "
                         f"{profile.PROFILE_NAME} profile."
                     )
                 if len(self.global_ids) > 0:
-                    raise ValueError(
+                    raise ModelError(
                         "Seller global IDs are not allowed in the "
                         f"{profile.PROFILE_NAME} profile."
                     )
         elif which == "seller tax representative":
             if len(self.ids) > 0:
-                raise ValueError(
+                raise ModelError(
                     "Seller tax representative IDs are not allowed in the "
                     f"{profile.PROFILE_NAME} profile."
                 )
             if len(self.global_ids) > 0:
-                raise ValueError(
+                raise ModelError(
                     "Seller tax representative global IDs are not allowed "
                     f"in the {profile.PROFILE_NAME} profile."
                 )
@@ -153,14 +154,14 @@ class TradeParty:
 
         # Optional for ship to party only.
         if which != "ship to" and self.name is None:
-            raise ValueError(f"{which.capitalize()} name is required.")
+            raise ModelError(f"{which.capitalize()} name is required.")
 
         # description
 
         # Allowed only for seller in EN 16931/COMFORT.
         if which != "seller" or not issubclass(profile, EN16931Invoice):
             if self.description is not None:
-                raise ValueError(
+                raise ModelError(
                     f"{which.capitalize()} description is not allowed."
                 )
 
@@ -169,7 +170,7 @@ class TradeParty:
         # Not allowed for seller tax representative and ship to party.
         if which in ("seller tax representative", "ship to"):
             if self.legal_id is not None:
-                raise ValueError(
+                raise ModelError(
                     f"{which.capitalize()} legal ID is not allowed "
                     f"in the {profile.PROFILE_NAME} profile."
                 )
@@ -180,20 +181,20 @@ class TradeParty:
         if which == "buyer":
             if not issubclass(profile, EN16931Invoice):
                 if self.trading_business_name is not None:
-                    raise ValueError(
+                    raise ModelError(
                         "Buyer trading business name is not allowed "
                         f"in the {profile.PROFILE_NAME} profile."
                     )
         elif which == "seller":
             if not issubclass(profile, BasicWLInvoice):
                 if self.trading_business_name is not None:
-                    raise ValueError(
+                    raise ModelError(
                         "Seller trading business name is not allowed in the "
                         f"{profile.PROFILE_NAME} profile."
                     )
         else:
             if self.trading_business_name is not None:
-                raise ValueError(
+                raise ModelError(
                     f"{which.capitalize()} trading business name is not "
                     f"allowed in the {profile.PROFILE_NAME} profile."
                 )
@@ -205,7 +206,7 @@ class TradeParty:
             profile, EN16931Invoice
         ):
             if len(self.contacts) > 0:
-                raise ValueError(
+                raise ModelError(
                     f"{which.capitalize()} contacts are not allowed "
                     f"in the {profile.PROFILE_NAME} profile."
                 )
@@ -218,7 +219,7 @@ class TradeParty:
         # Optional for buyer in MINIMUM and for ship to party.
         if which == "payee":
             if self.address is not None:
-                raise ValueError(
+                raise ModelError(
                     "Payee address is not allowed in the "
                     f"{profile.PROFILE_NAME} profile."
                 )
@@ -226,7 +227,7 @@ class TradeParty:
             which == "buyer" and issubclass(profile, BasicWLInvoice)
         ):
             if self.address is None:
-                raise ValueError(
+                raise ModelError(
                     f"{which.capitalize()} address is required in the "
                     f"{profile.PROFILE_NAME} profile."
                 )
@@ -239,7 +240,7 @@ class TradeParty:
         # Not allowed in MINIMUM.
         if not issubclass(profile, BasicWLInvoice):
             if self.email is not None:
-                raise ValueError(
+                raise ModelError(
                     f"{which.capitalize()} email is not allowed in the "
                     f"{profile.PROFILE_NAME} profile."
                 )
@@ -252,7 +253,7 @@ class TradeParty:
             which == "buyer" and not issubclass(profile, BasicWLInvoice)
         ) or which in ("seller tax representative", "ship to", "payee"):
             if self.tax_number is not None:
-                raise ValueError(
+                raise ModelError(
                     f"{which.capitalize()} tax number is not allowed in the "
                     f"{profile.PROFILE_NAME} profile."
                 )
@@ -264,7 +265,7 @@ class TradeParty:
         # Optional for buyer in BASIC WL and seller.
         if which == "seller tax representative":
             if self.vat_id is None:
-                raise ValueError(
+                raise ModelError(
                     "Seller tax representative VAT ID is required in the "
                     f"{profile.PROFILE_NAME} profile."
                 )
@@ -274,7 +275,7 @@ class TradeParty:
             or which in ("ship to", "payee")
         ):
             if self.vat_id is not None:
-                raise ValueError(
+                raise ModelError(
                     f"{which.capitalize()} VAT ID is not allowed in the "
                     f"{profile.PROFILE_NAME} profile."
                 )
@@ -305,7 +306,7 @@ class PostalAddress:
 
     def __post_init__(self) -> None:
         if not validate_iso_3166_1_alpha_2(self.country_code):
-            raise ValueError("Invalid ISO 3166-1 alpha-2 country code.")
+            raise ModelError("Invalid ISO 3166-1 alpha-2 country code.")
 
     def validate(self, profile: type[MinimumInvoice]) -> None:
         """Validate the requirements for the given profile."""
@@ -318,7 +319,7 @@ class PostalAddress:
                 or self.line_two is not None
                 or self.line_three is not None
             ):
-                raise ValueError(
+                raise ModelError(
                     "Address fields are not allowed in the "
                     f"{profile.PROFILE_NAME} profile."
                 )
@@ -352,7 +353,7 @@ class MinimumInvoice:
 
     def __post_init__(self) -> None:
         if not self.type_code.is_invoice_type:
-            raise ValueError(f"Invalid invoice type code: {self.type_code}.")
+            raise ModelError(f"Invalid invoice type code: {self.type_code}.")
         self.seller.validate(type(self), which="seller")
         self.buyer.validate(type(self), which="buyer")
         validate_iso_4217_currency(self.currency_code)
@@ -392,11 +393,11 @@ class BasicWLInvoice(MinimumInvoice):
     def __post_init__(self) -> None:
         super().__post_init__()
         if self.line_total_amount is None:
-            raise ValueError(
+            raise ModelError(
                 "Line total amount is required in BASIC WL profile."
             )
         if len(self.tax) < 1:
-            raise ValueError("At least one tax entry is required.")
+            raise ModelError("At least one tax entry is required.")
         for tax in self.tax:
             tax.validate(type(self))
         if self.payee is not None:
@@ -426,7 +427,7 @@ class BasicInvoice(BasicWLInvoice):
 
     def __post_init__(self) -> None:
         if len(self.line_items) < 1:
-            raise ValueError("At least one line item is required.")
+            raise ModelError("At least one line item is required.")
         if type(self) is BasicInvoice:
             for li in self.line_items:
                 if isinstance(li, EN16931LineItem):
@@ -507,7 +508,7 @@ class EN16931LineItem(LineItem):
 
     def __post_init__(self) -> None:
         if self.note is not None and self.note.subject_code is not None:
-            raise ValueError(
+            raise ModelError(
                 "Line item note subject codes are not allowed in the "
                 "EN 16931/COMFORT profile."
             )
@@ -515,17 +516,17 @@ class EN16931LineItem(LineItem):
             self.applied_allowance_charge is not None
             and self.gross_unit_price is None
         ):
-            raise ValueError(
+            raise ModelError(
                 "Allowance/charge requires a gross unit price in the "
                 "EN 16931/COMFORT profile."
             )
         if self.origin_country is not None:
             if not validate_iso_3166_1_alpha_2(self.origin_country):
-                raise ValueError("Invalid ISO 3166-1 alpha-2 country code.")
+                raise ModelError("Invalid ISO 3166-1 alpha-2 country code.")
         if self.billing_period is not None:
             start, end = self.billing_period
             if start > end:
-                raise ValueError(
+                raise ModelError(
                     "Billing period start date must be before end date."
                 )
 
@@ -565,25 +566,25 @@ class LineAllowanceCharge:
             if not isinstance(
                 self.reason_code, (SpecialServiceCode, NoneType)
             ):
-                raise ValueError(
+                raise ModelError(
                     "Surcharge requires a special service reason code."
                 )
         else:
             if not isinstance(
                 self.reason_code, (AllowanceChargeCode, NoneType)
             ):
-                raise ValueError("Allowance/charge requires a reason code.")
+                raise ModelError("Allowance/charge requires a reason code.")
 
     def validate(self, profile: type[BasicInvoice]) -> None:
         """Validate the requirements for the given profile."""
         if not issubclass(profile, EN16931Invoice):
             if self.percent is not None:
-                raise ValueError(
+                raise ModelError(
                     "Percentage-based allowances/charges are not allowed "
                     f"in the {profile.PROFILE_NAME} profile."
                 )
             if self.basis_amount is not None:
-                raise ValueError(
+                raise ModelError(
                     "Basis amount-based allowances/charges are not allowed "
                     f"in the {profile.PROFILE_NAME} profile."
                 )
@@ -612,7 +613,7 @@ class ReferenceDocument:
 
     def __post_init__(self) -> None:
         if not self.type_code.is_supporting_document_type:
-            raise ValueError(
+            raise ModelError(
                 f"Invalid reference document type code: {self.type_code}."
             )
 
@@ -634,12 +635,12 @@ class PaymentMeans:
         """Validate the requirements for the given profile."""
         if not issubclass(profile, EN16931Invoice):
             if self.information is not None:
-                raise ValueError(
+                raise ModelError(
                     "Payment means information is not allowed in the "
                     f"{profile.PROFILE_NAME} profile."
                 )
             if self.card is not None:
-                raise ValueError(
+                raise ModelError(
                     "Payment means card information is not allowed in the "
                     f"{profile.PROFILE_NAME} profile."
                 )
@@ -647,12 +648,12 @@ class PaymentMeans:
                 self.payee_account is not None
                 and self.payee_account.name is not None
             ):
-                raise ValueError(
+                raise ModelError(
                     "Payment means account name is not allowed in the "
                     f"{profile.PROFILE_NAME} profile."
                 )
             if self.payee_bic is not None:
-                raise ValueError(
+                raise ModelError(
                     "Payment means BIC is not allowed in the "
                     f"{profile.PROFILE_NAME} profile."
                 )
@@ -671,7 +672,7 @@ class PaymentTerms:
         """Validate the requirements for the given profile."""
         if not issubclass(profile, EN16931Invoice):
             if self.description is not None:
-                raise ValueError(
+                raise ModelError(
                     "Payment terms description is not allowed in the "
                     f"{profile.PROFILE_NAME} profile."
                 )
@@ -705,7 +706,7 @@ class Tax:
             self.due_date_type_code is not None
             and not self.due_date_type_code.is_invoice_due_date
         ):
-            raise ValueError(
+            raise ModelError(
                 "Invalid due date type code: {self.due_date_type_code}."
             )
 
@@ -713,7 +714,7 @@ class Tax:
         """Validate the requirements for the given profile."""
         if not issubclass(profile, EN16931Invoice):
             if self.tax_point_date is not None:
-                raise ValueError(
+                raise ModelError(
                     "Tax point date is not allowed in the "
                     f"{profile.PROFILE_NAME} profile."
                 )
