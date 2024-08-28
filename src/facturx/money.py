@@ -1,5 +1,7 @@
+import locale
 import re
 from decimal import Decimal
+from typing import Literal, cast
 
 
 class Money:
@@ -46,6 +48,35 @@ class Money:
 
     def __repr__(self) -> str:
         return f"Money('{str(self.amount)}', {self.currency!r})"
+
+    def __str__(self) -> str:
+        conv = locale.localeconv()
+        # Check for C locale, in which case locale.currency() raises an error.
+        if conv["int_frac_digits"] == 127:  # C locale
+            return f"{self.currency} {self.amount}"
+
+        formatted_amount = locale.currency(
+            self.amount, symbol=False, grouping=True
+        )
+
+        precedes = cast(
+            Literal[0, 1],
+            conv[self.amount < 0 and "n_cs_precedes" or "p_cs_precedes"],
+        )
+        separated = cast(
+            Literal[0, 1],
+            conv[self.amount < 0 and "n_sep_by_space" or "p_sep_by_space"],
+        )
+
+        if precedes:
+            return self.currency + (separated and " " or "") + formatted_amount
+        else:
+            currency = (
+                self.currency[:-1]
+                if self.currency.endswith(" ")
+                else self.currency
+            )
+            return formatted_amount + (separated and " " or "") + currency
 
 
 _ISO_4217_RE = re.compile(r"^[A-Z]{3}$")
