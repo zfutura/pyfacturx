@@ -6,12 +6,136 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PyFactur-X 0.1.0\n"
 "Report-Msgid-Bugs-To: https://github.com/zfutura/pyfacturx/issues\n"
-"POT-Creation-Date: 2024-08-28 15:39+0200\n"
+"POT-Creation-Date: 2024-08-28 20:10+0200\n"
 "PO-Revision-Date: 2024-08-28 15:39+0200\n"
 "Last-Translator: Sebastian Rittau <srittau@rittau.biz>\n"
 "Language: de\n"
+"Language-Team: de <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.16.0\n"
+
+#: src/facturx/format.py:18
+msgid "Validated Priced Tender"
+msgstr "Validiertes Angebot"
+
+#: src/facturx/format.py:19
+msgid "Invoicing Data Sheet"
+msgstr "Rechnungsdatenblatt"
+
+#: src/facturx/format.py:20
+msgid "Pro Forma Invoice"
+msgstr "Proberechnung"
+
+#: src/facturx/format.py:21
+msgid "Partial Invoice"
+msgstr "Teilrechnung"
+
+#: src/facturx/format.py:22
+msgid "Invoice"
+msgstr "Rechnung"
+
+#: src/facturx/format.py:23
+msgid "Credit Note"
+msgstr "Gutschrift"
+
+#: src/facturx/format.py:24
+msgid "Correction"
+msgstr "Rechnungskorrektur"
+
+#: src/facturx/format.py:25
+msgid "Prepayment"
+msgstr "Abschlagsrechnung"
+
+#: src/facturx/format.py:26
+msgid "Related Document"
+msgstr "Verwandtes Dokument"
+
+#: src/facturx/format.py:45
+#, python-format
+msgid "Date: {invoice_date:%Y-%m-%d}"
+msgstr "Datum: {invoice_date:%d.%m.%Y}"
+
+#: src/facturx/format.py:52
+msgid "Sender"
+msgstr "Absender"
+
+#: src/facturx/format.py:55
+msgid "Recipient"
+msgstr "Empfänger"
+
+#: src/facturx/format.py:61
+msgid "Business Process ID: {}"
+msgstr "Geschäftsprozess-ID: {}"
+
+#: src/facturx/format.py:64
+msgid "Buyer Reference: {}"
+msgstr "Empfängerreferenz: {}"
+
+#: src/facturx/format.py:66
+msgid "Buyer Order ID: {}"
+msgstr "Bestellnummer des Empfängers: {}"
+
+#: src/facturx/format.py:68
+msgid "Totals"
+msgstr "Beträge"
+
+#: src/facturx/format.py:79
+msgid "Line Total (net): {}"
+msgstr "Summe der Positionen (netto): {}"
+
+#: src/facturx/format.py:81
+msgid "Net: {}"
+msgstr "Nettobetrag: {}"
+
+#: src/facturx/format.py:83
+msgid "Tax: {}"
+msgstr "Steuern: {}"
+
+#: src/facturx/format.py:84
+msgid "Gross: {}"
+msgstr "Bruttobetrag: {}"
+
+#: src/facturx/format.py:85
+msgid "Due amount: {}"
+msgstr "Zahlbetrag: {}"
+
+#: src/facturx/format.py:95
+msgid "{name} ({trading_business_name})"
+msgstr "{name} ({trading_business_name})"
+
+#: src/facturx/format.py:109
+msgid "VAT ID: {}"
+msgstr "USt-ID: {}"
+
+#: src/facturx/format.py:111
+msgid "Tax Number: {}"
+msgstr "Steuernummer: {}"
+
+#: src/facturx/format.py:113
+msgid "ID: {}"
+msgstr "ID: {}"
+
+#: src/facturx/format.py:115
+msgid "IDs: {}"
+msgstr "ID: {}"
+
+#: src/facturx/format.py:146
+msgid "Contact:"
+msgstr "Kontakt:"
+
+#: src/facturx/format.py:152
+msgid "  Phone: {phone}"
+msgstr "  Telefon: {phone}"
+
+#: src/facturx/format.py:161
+#, fuzzy
+msgid "Global ID: {id}"
+msgstr "Globale ID: {}"
+
+#: src/facturx/format.py:164
+msgid "{id_type}: {id}"
+msgstr "{id_type}: {id}"
+

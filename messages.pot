@@ -10,3 +10,125 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.16.0\n"
+
+#: src/facturx/format.py:18
+msgid "Validated Priced Tender"
+msgstr ""
+
+#: src/facturx/format.py:19
+msgid "Invoicing Data Sheet"
+msgstr ""
+
+#: src/facturx/format.py:20
+msgid "Pro Forma Invoice"
+msgstr ""
+
+#: src/facturx/format.py:21
+msgid "Partial Invoice"
+msgstr ""
+
+#: src/facturx/format.py:22
+msgid "Invoice"
+msgstr ""
+
+#: src/facturx/format.py:23
+msgid "Credit Note"
+msgstr ""
+
+#: src/facturx/format.py:24
+msgid "Correction"
+msgstr ""
+
+#: src/facturx/format.py:25
+msgid "Prepayment"
+msgstr ""
+
+#: src/facturx/format.py:26
+msgid "Related Document"
+msgstr ""
+
+#: src/facturx/format.py:45
+#, python-format
+msgid "Date: {invoice_date:%Y-%m-%d}"
+msgstr ""
+
+#: src/facturx/format.py:52
+msgid "Sender"
+msgstr ""
+
+#: src/facturx/format.py:55
+msgid "Recipient"
+msgstr ""
+
+#: src/facturx/format.py:61
+msgid "Business Process ID: {}"
+msgstr ""
+
+#: src/facturx/format.py:64
+msgid "Buyer Reference: {}"
+msgstr ""
+
+#: src/facturx/format.py:66
+msgid "Buyer Order ID: {}"
+msgstr ""
+
+#: src/facturx/format.py:68
+msgid "Totals"
+msgstr ""
+
+#: src/facturx/format.py:79
+msgid "Line Total (net): {}"
+msgstr ""
+
+#: src/facturx/format.py:81
+msgid "Net: {}"
+msgstr ""
+
+#: src/facturx/format.py:83
+msgid "Tax: {}"
+msgstr ""
+
+#: src/facturx/format.py:84
+msgid "Gross: {}"
+msgstr ""
+
+#: src/facturx/format.py:85
+msgid "Due amount: {}"
+msgstr ""
+
+#: src/facturx/format.py:95
+msgid "{name} ({trading_business_name})"
+msgstr ""
+
+#: src/facturx/format.py:109
+msgid "VAT ID: {}"
+msgstr ""
+
+#: src/facturx/format.py:111
+msgid "Tax Number: {}"
+msgstr ""
+
+#: src/facturx/format.py:113
+msgid "ID: {}"
+msgstr ""
+
+#: src/facturx/format.py:115
+msgid "IDs: {}"
+msgstr ""
+
+#: src/facturx/format.py:146
+msgid "Contact:"
+msgstr ""
+
+#: src/facturx/format.py:152
+msgid "  Phone: {phone}"
+msgstr ""
+
+#: src/facturx/format.py:161
+msgid "Global ID: {id}"
+msgstr ""
+
+#: src/facturx/format.py:164
+msgid "{id_type}: {id}"
+msgstr ""
+

@@ -54,3 +54,17 @@ from facturx import parse_xml
 
 invoice = parse_xml(path_or_xml_string)  # MinimumInvoice or a subclass
 ```
+
+### Printing invoices
+
+To print a formatted Factur-X invoice to the terminal, you can use the
+`format_invoice_as_text()` function:
+
+```python
+from facturx import format_invoice_as_text
+
+invoice = EN16931Invoice(...)
+print(format_invoice_as_text(invoice))
+```
+
+Currently, only invoices with the MINIMUM profile are supported.
