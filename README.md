@@ -2,8 +2,7 @@
 
 [![GitHub](https://img.shields.io/github/release/zfutura/pyfacturx/all.svg)](https://github.com/zfutura/pyfacturx/releases/)
 [![Apache 2.0 License](https://img.shields.io/github/license/zfutura/pyfacturx)](https://github.com/zfutura/pyfacturx/blob/main/LICENSE)
-[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/zfutura/pyfacturx/test-and-lint)](https://github.com/zfutura/pyfacturx/actions/workflows/test-and-lint)
-
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/zfutura/pyfacturx/test-and-lint.yml)](https://github.com/zfutura/pyfacturx/actions/workflows/test-and-lint)
 
 Factur-X (also called ZUGFeRD in Germany) is a Franco-German standard for
 electronic invoices. Structured XML data is embedded in PDF-A/3 files,
