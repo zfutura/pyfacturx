@@ -13,18 +13,24 @@ classifiers = [
     "Topic :: File Formats",
     "Topic :: Office/Business :: Financial :: Accounting",
 ]
+include = [{ path = "src/facturx/locale/**/*.mo", format = ["wheel"] }]
 exclude = ["src/facturx/test_*"]
 
 [tool.poetry.dependencies]
 python = "^3.11"
 
 [tool.poetry.group.dev.dependencies]
+babel = "^2.16.0"
 mypy = "^1.11.1"
 poethepoet = "^0.27.0"
 pytest = "^8.3.2"
 ruff = "^0.6.1"
 
 [tool.poe.tasks]
+i18n-extract = "pybabel extract -o messages.pot src"
+i18n-init = "pybabel init -D pyfactur-x -i messages.pot -d src/facturx/locale -l "
+i18n-update = "pybabel update -D pyfactur-x -i messages.pot -d src/facturx/locale"
+i18n-compile = "pybabel compile -D pyfactur-x -d src/facturx/locale"
 lint = "ruff check src"
 test = "pytest src"
 typecheck = "mypy src"

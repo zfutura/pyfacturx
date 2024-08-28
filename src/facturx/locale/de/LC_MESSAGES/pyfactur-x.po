@@ -1,0 +1,17 @@
+# German translations for PyFactur-X.
+# This file is distributed under the Apache License 2.0.
+# Sebastian Rittau <srittau@rittau.biz>
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PyFactur-X 0.1.0\n"
+"Report-Msgid-Bugs-To: https://github.com/zfutura/pyfacturx/issues\n"
+"POT-Creation-Date: 2024-08-28 15:39+0200\n"
+"PO-Revision-Date: 2024-08-28 15:39+0200\n"
+"Last-Translator: Sebastian Rittau <srittau@rittau.biz>\n"
+"Language: de\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.16.0\n"
