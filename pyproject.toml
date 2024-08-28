@@ -13,6 +13,7 @@ classifiers = [
     "Topic :: File Formats",
     "Topic :: Office/Business :: Financial :: Accounting",
 ]
+exclude = ["src/facturx/test_*"]
 
 [tool.poetry.dependencies]
 python = "^3.11"
