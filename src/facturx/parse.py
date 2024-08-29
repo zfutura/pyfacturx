@@ -33,11 +33,13 @@ from .model import (
     BankAccount,
     BasicInvoice,
     BasicWLInvoice,
-    DocumentAllowanceOrCharge,
+    DocumentAllowance,
+    DocumentCharge,
     EN16931Invoice,
     EN16931LineItem,
     IncludedNote,
-    LineAllowanceOrCharge,
+    LineAllowance,
+    LineCharge,
     LineItem,
     MinimumInvoice,
     PaymentMeans,
@@ -454,7 +456,7 @@ def _parse_minimum_invoice(tree: ET.Element) -> MinimumInvoice:
             "MINIMUM",
             "Billing period is not supported in MINIMUM profile",
         )
-    if len(settlement.allowances_and_charges) > 0:
+    if len(settlement.allowances) > 0 or len(settlement.charges) > 0:
         raise InvalidProfileError(
             "MINIMUM",
             "SpecifiedTradeAllowanceCharge element is not supported in "
@@ -644,7 +646,8 @@ def _basic_wl_args(
         "payee": settlement.payee,
         "delivery_date": delivery.delivery_date,
         "billing_period": settlement.billing_period,
-        "allowances_and_charges": settlement.allowances_and_charges,
+        "allowances": settlement.allowances,
+        "charges": settlement.charges,
         "notes": doc_info.notes,
         "seller_tax_representative": agreement.seller_tax_representative,
         "contract_id": agreement.contract_id,
@@ -861,7 +864,8 @@ class _TradeSettlement(NamedTuple):
     payment_means: list[PaymentMeans]  # BASIC WL+
     tax: list[Tax]  # BASIC WL+
     billing_period: tuple[date, date] | None  # BASIC WL+
-    allowances_and_charges: list[DocumentAllowanceOrCharge]  # BASIC WL+
+    allowances: list[DocumentAllowance]  # BASIC WL+
+    charges: list[DocumentCharge]  # BASIC WL+
     payment_terms: PaymentTerms | None  # BASIC WL+
     preceding_invoice: tuple[str, date | None] | None  # BASIC WL+
     receiver_account_ids: list[str]  # BASIC WL+
@@ -917,7 +921,8 @@ def _parse_settlement(parent: ET.Element) -> _TradeSettlement:
         payment_means,
         tax,
         billing_period,
-        allowances,
+        [a for a in allowances if isinstance(a, DocumentAllowance)],
+        [c for c in allowances if isinstance(c, DocumentCharge)],
         payment_terms,
         referenced_invoice,
         receiver_account_ids,
@@ -1095,7 +1100,8 @@ def _parse_line_item(el: ET.Element, default_currency: str) -> LineItem:
         settlement.tax_category,
         global_id=product.global_id,
         basis_quantity=agreement.basis_quantity,
-        allowances_and_charges=settlement.allowances_and_charges,
+        allowances=settlement.allowances,
+        charges=settlement.charges,
     )
 
 
@@ -1118,7 +1124,8 @@ def _parse_en16931_line_item(
         global_id=product.global_id,
         basis_quantity=agreement.basis_quantity,
         gross_unit_price=agreement.gross_unit_price,
-        allowances_and_charges=settlement.allowances_and_charges,
+        allowances=settlement.allowances,
+        charges=settlement.charges,
         note=doc.note,
         seller_assigned_id=product.seller_id,
         buyer_assigned_id=product.buyer_id,
@@ -1229,7 +1236,7 @@ def _parse_product_classification(parent: ET.Element) -> ProductClassification:
 
 class _LineAgreement(NamedTuple):
     gross_unit_price: tuple[Money, OptionalQuantity | None] | None  # EN16931+
-    gross_allowance_or_charge: LineAllowanceOrCharge | None  # EN16931+
+    gross_allowance_or_charge: LineAllowance | LineCharge | None  # EN16931+
     net_price: Money
     basis_quantity: OptionalQuantity | None
     buyer_order_line_id: str | None  # EN16931+
@@ -1268,7 +1275,8 @@ def _parse_line_agreement(
 def _parse_gross_line_price(
     parent: ET.Element, default_currency: str
 ) -> tuple[
-    tuple[Money, OptionalQuantity | None] | None, LineAllowanceOrCharge | None
+    tuple[Money, OptionalQuantity | None] | None,
+    LineAllowance | LineCharge | None,
 ]:
     el = parent.find(f"./{{{NS_RAM}}}GrossPriceProductTradePrice")
     if el is None:
@@ -1279,7 +1287,7 @@ def _parse_gross_line_price(
     gross_quantity = _find_optional_quantity_optional(
         el, f"./{{{NS_RAM}}}BasisQuantity"
     )
-    allowance: LineAllowanceOrCharge | None = None
+    allowance: LineAllowance | LineCharge | None = None
     allowance_el = el.find(f"./{{{NS_RAM}}}AppliedTradeAllowanceCharge")
     if allowance_el is not None:
         allowance = _parse_line_allowance_or_charge(
@@ -1309,7 +1317,8 @@ def _parse_line_delivery(parent: ET.Element) -> _LineDelivery:
 class _LineSettlement(NamedTuple):
     tax_category: TaxCategoryCode
     tax_rate: Decimal | None
-    allowances_and_charges: Sequence[LineAllowanceOrCharge]
+    allowances: Sequence[LineAllowance]
+    charges: Sequence[LineCharge]
     total_amount: Money
     billing_period: tuple[date, date] | None  # EN16931+
     doc_ref: DocRef | None  # EN16931+
@@ -1346,7 +1355,8 @@ def _parse_line_settlement(
     return _LineSettlement(
         tax_category,
         tax_rate,
-        allowances,
+        [a for a in allowances if isinstance(a, LineAllowance)],
+        [c for c in allowances if isinstance(c, LineCharge)],
         total_amount,
         billing_period,
         doc_ref,
@@ -1367,7 +1377,7 @@ def _parse_line_summation(parent: ET.Element, default_currency: str) -> Money:
 
 def _parse_line_allowance_or_charge(
     el: ET.Element, default_currency: str
-) -> LineAllowanceOrCharge:
+) -> LineAllowance | LineCharge:
     surcharge = _find_indicator(el, f"./{{{NS_RAM}}}ChargeIndicator")
     percent = _find_percent_optional(el, f"./{{{NS_RAM}}}CalculationPercent")
     basis_amount = _find_amount_optional(
@@ -1376,30 +1386,39 @@ def _parse_line_allowance_or_charge(
     actual_amount = _find_amount(
         el, f"./{{{NS_RAM}}}ActualAmount", default_currency
     )
-    reason_code: AllowanceChargeCode | SpecialServiceCode | None = None
+    service_code: SpecialServiceCode | None = None
+    allowance_code: AllowanceChargeCode | None = None
     reason_code_s = _find_text_optional(el, f"./{{{NS_RAM}}}ReasonCode")
     if reason_code_s is not None:
         try:
             if surcharge:
-                reason_code = SpecialServiceCode(reason_code_s)
+                service_code = SpecialServiceCode(reason_code_s)
             else:
-                reason_code = AllowanceChargeCode(int(reason_code_s))
+                allowance_code = AllowanceChargeCode(int(reason_code_s))
         except ValueError as exc:
             raise InvalidXMLError(str(exc)) from exc
     reason = _find_text_optional(el, f"./{{{NS_RAM}}}Reason")
-    return LineAllowanceOrCharge(
-        actual_amount,
-        surcharge,
-        reason_code,
-        reason,
-        percent=percent,
-        basis_amount=basis_amount,
-    )
+    if surcharge:
+        return LineCharge(
+            actual_amount,
+            service_code,
+            reason,
+            percent=percent,
+            basis_amount=basis_amount,
+        )
+    else:
+        return LineAllowance(
+            actual_amount,
+            allowance_code,
+            reason,
+            percent=percent,
+            basis_amount=basis_amount,
+        )
 
 
 def _parse_allowance_or_charge(
     el: ET.Element, default_currency: str
-) -> DocumentAllowanceOrCharge:
+) -> DocumentAllowance | DocumentCharge:
     line_allowance = _parse_line_allowance_or_charge(el, default_currency)
     tax_el = el.find(f"./{{{NS_RAM}}}CategoryTradeTax")
     if tax_el is None:
@@ -1415,16 +1434,26 @@ def _parse_allowance_or_charge(
     tax_rate = _find_percent_optional(
         tax_el, f"./{{{NS_RAM}}}RateApplicablePercent"
     )
-    return DocumentAllowanceOrCharge(
-        line_allowance.actual_amount,
-        line_allowance.surcharge,
-        line_allowance.reason_code,
-        line_allowance.reason,
-        percent=line_allowance.percent,
-        basis_amount=line_allowance.basis_amount,
-        tax_category=tax_category,
-        tax_rate=tax_rate,
-    )
+    if isinstance(line_allowance, LineCharge):
+        return DocumentCharge(
+            line_allowance.actual_amount,
+            line_allowance.reason_code,
+            line_allowance.reason,
+            percent=line_allowance.percent,
+            basis_amount=line_allowance.basis_amount,
+            tax_category=tax_category,
+            tax_rate=tax_rate,
+        )
+    else:
+        return DocumentAllowance(
+            line_allowance.actual_amount,
+            line_allowance.reason_code,
+            line_allowance.reason,
+            percent=line_allowance.percent,
+            basis_amount=line_allowance.basis_amount,
+            tax_category=tax_category,
+            tax_rate=tax_rate,
+        )
 
 
 def _parse_payment_terms(parent: ET.Element) -> PaymentTerms | None:

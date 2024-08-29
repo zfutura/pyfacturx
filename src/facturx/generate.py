@@ -14,11 +14,13 @@ from .const import NS_CII, NS_RAM, NS_UDT
 from .model import (
     BasicInvoice,
     BasicWLInvoice,
-    DocumentAllowanceOrCharge,
+    DocumentAllowance,
+    DocumentCharge,
     EN16931Invoice,
     EN16931LineItem,
     IncludedNote,
-    LineAllowanceOrCharge,
+    LineAllowance,
+    LineCharge,
     LineItem,
     MinimumInvoice,
     PaymentMeans,
@@ -401,12 +403,21 @@ def _generate_line_trade_agreement(
             )
             if quantity is not None:
                 _quantity_element(price_el, "ram:BasisQuantity", quantity)
-            if line_item.gross_allowance_or_charge is not None:
-                _generate_allowance_charge(
+            if isinstance(line_item.gross_allowance_or_charge, LineAllowance):
+                _generate_allowance_or_charge(
                     price_el,
                     "ram:AppliedTradeAllowanceCharge",
                     invoice,
                     line_item.gross_allowance_or_charge,
+                    False,
+                )
+            elif isinstance(line_item.gross_allowance_or_charge, LineCharge):
+                _generate_allowance_or_charge(
+                    price_el,
+                    "ram:AppliedTradeAllowanceCharge",
+                    invoice,
+                    line_item.gross_allowance_or_charge,
+                    True,
                 )
     price_el = ET.SubElement(agreement, "ram:NetPriceProductTradePrice")
     _currency_element(
@@ -446,9 +457,21 @@ def _generate_line_settlement(
             period_el = ET.SubElement(settlement, "ram:BillingSpecifiedPeriod")
             _date_element(period_el, "ram:StartDateTime", start)
             _date_element(period_el, "ram:EndDateTime", end)
-    for allowance in line_item.allowances_and_charges:
-        _generate_allowance_charge(
-            settlement, "ram:SpecifiedTradeAllowanceCharge", invoice, allowance
+    for allowance in line_item.allowances:
+        _generate_allowance_or_charge(
+            settlement,
+            "ram:SpecifiedTradeAllowanceCharge",
+            invoice,
+            allowance,
+            False,
+        )
+    for charge in line_item.charges:
+        _generate_allowance_or_charge(
+            settlement,
+            "ram:SpecifiedTradeAllowanceCharge",
+            invoice,
+            charge,
+            True,
         )
     summation = ET.SubElement(
         settlement,
@@ -493,49 +516,50 @@ def _generate_trade_account(parent: ET.Element, id: str) -> None:
     _id_element(parent, "ram:ReceivableSpecifiedTradeAccountingAccount", id)
 
 
-def _generate_allowance_charge(
+def _generate_allowance_or_charge(
     parent: ET.Element,
     name: str,
     invoice: BasicWLInvoice,
-    allowance: LineAllowanceOrCharge,
+    allowance_or_charge: LineAllowance | LineCharge,
+    is_charge: bool,
 ) -> None:
-    allowance_et = ET.SubElement(parent, name)
-    charge_el = ET.SubElement(allowance_et, "ram:ChargeIndicator")
-    ET.SubElement(charge_el, "udt:Indicator").text = (
-        "false" if allowance.surcharge else "true"
+    el = ET.SubElement(parent, name)
+    indicator_el = ET.SubElement(el, "ram:ChargeIndicator")
+    ET.SubElement(indicator_el, "udt:Indicator").text = (
+        "true" if is_charge else "false"
     )
-    if allowance.percent is not None:
-        ET.SubElement(allowance_et, "ram:CalculationPercent").text = str(
-            allowance.percent
+    if allowance_or_charge.percent is not None:
+        ET.SubElement(el, "ram:CalculationPercent").text = str(
+            allowance_or_charge.percent
         )
-    if allowance.basis_amount is not None:
+    if allowance_or_charge.basis_amount is not None:
         _currency_element(
-            allowance_et,
+            el,
             "ram:BasisAmount",
-            allowance.basis_amount,
+            allowance_or_charge.basis_amount,
             invoice.currency_code,
         )
     _currency_element(
-        allowance_et,
+        el,
         "ram:ActualAmount",
-        allowance.actual_amount,
+        allowance_or_charge.actual_amount,
         invoice.currency_code,
     )
-    if allowance.reason_code is not None:
-        ET.SubElement(allowance_et, "ram:ReasonCode").text = str(
-            allowance.reason_code
+    if allowance_or_charge.reason_code is not None:
+        ET.SubElement(el, "ram:ReasonCode").text = str(
+            allowance_or_charge.reason_code
         )
-    if allowance.reason is not None:
-        ET.SubElement(allowance_et, "ram:Reason").text = allowance.reason
-    if isinstance(allowance, DocumentAllowanceOrCharge):
-        tax_el = ET.SubElement(allowance_et, "ram:CategoryTradeTax")
+    if allowance_or_charge.reason is not None:
+        ET.SubElement(el, "ram:Reason").text = allowance_or_charge.reason
+    if isinstance(allowance_or_charge, (DocumentAllowance, DocumentCharge)):
+        tax_el = ET.SubElement(el, "ram:CategoryTradeTax")
         ET.SubElement(tax_el, "ram:TypeCode").text = "VAT"
         ET.SubElement(tax_el, "ram:CategoryCode").text = str(
-            allowance.tax_category
+            allowance_or_charge.tax_category
         )
-        if allowance.tax_rate is not None:
+        if allowance_or_charge.tax_rate is not None:
             ET.SubElement(tax_el, "ram:RateApplicablePercent").text = str(
-                allowance.tax_rate
+                allowance_or_charge.tax_rate
             )
 
 
@@ -678,12 +702,21 @@ def _generate_settlement(parent: ET.Element, invoice: MinimumInvoice) -> None:
             _date_element(billing_period, "ram:StartDateTime", start)
             _date_element(billing_period, "ram:EndDateTime", end)
 
-        for allowance in invoice.allowances_and_charges:
-            _generate_allowance_charge(
+        for allowance in invoice.allowances:
+            _generate_allowance_or_charge(
                 settlement_el,
                 "ram:SpecifiedTradeAllowanceCharge",
                 invoice,
                 allowance,
+                False,
+            )
+        for charge in invoice.charges:
+            _generate_allowance_or_charge(
+                settlement_el,
+                "ram:SpecifiedTradeAllowanceCharge",
+                invoice,
+                charge,
+                True,
             )
 
         if invoice.payment_terms is not None:
@@ -949,17 +982,16 @@ if __name__ == "__main__":
                     Money("40.00", "EUR"),
                     (Decimal(1), QuantityCode.HOUR),
                 ),
-                gross_allowance_or_charge=LineAllowanceOrCharge(
+                gross_allowance_or_charge=LineAllowance(
                     Money("10.00", "EUR"),
                     reason_code=AllowanceChargeCode.AHEAD_OF_SCHEDULE,
                 ),
-                allowances_and_charges=[
-                    LineAllowanceOrCharge(
-                        Money("0.05", "EUR"), surcharge=True
-                    ),
-                    LineAllowanceOrCharge(
+                charges=[
+                    LineCharge(Money("0.05", "EUR")),
+                ],
+                allowances=[
+                    LineAllowance(
                         Money("1.00", "EUR"),
-                        surcharge=False,
                         reason_code=AllowanceChargeCode.AHEAD_OF_SCHEDULE,
                         reason="Ahead of schedule",
                         basis_amount=Money("20.00", "EUR"),

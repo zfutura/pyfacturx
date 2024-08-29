@@ -4,7 +4,6 @@ import datetime
 from collections.abc import Sequence
 from dataclasses import KW_ONLY, dataclass, field
 from decimal import Decimal
-from types import NoneType
 from typing import ClassVar, Literal
 
 from .const import (
@@ -42,8 +41,10 @@ __all__ = [
     "Tax",
     "TradeContact",
     "TradeParty",
-    "LineAllowanceOrCharge",
-    "DocumentAllowanceOrCharge",
+    "LineAllowance",
+    "LineCharge",
+    "DocumentAllowance",
+    "DocumentCharge",
     "ProductCharacteristic",
     "ProductClassification",
     "PaymentMeans",
@@ -386,9 +387,8 @@ class BasicWLInvoice(MinimumInvoice):
     payee: TradeParty | None = None
     delivery_date: datetime.date | None = None
     billing_period: tuple[datetime.date, datetime.date] | None = None
-    allowances_and_charges: Sequence[DocumentAllowanceOrCharge] = field(
-        default_factory=list
-    )
+    allowances: Sequence[DocumentAllowance] = field(default_factory=list)
+    charges: Sequence[DocumentCharge] = field(default_factory=list)
     notes: list[IncludedNote] = field(default_factory=list)
     seller_tax_representative: TradeParty | None = None
     contract_id: str | None = None
@@ -492,14 +492,15 @@ class LineItem:
 
     _: KW_ONLY
     basis_quantity: OptionalQuantity | None = None
-    allowances_and_charges: Sequence[LineAllowanceOrCharge] = field(
-        default_factory=list
-    )
+    allowances: Sequence[LineAllowance] = field(default_factory=list)
+    charges: Sequence[LineCharge] = field(default_factory=list)
 
     def validate(self, profile: type[BasicInvoice]) -> None:
         """Validate the requirements for the given profile."""
-        for allowance in self.allowances_and_charges:
+        for allowance in self.allowances:
             allowance.validate(profile)
+        for charge in self.charges:
+            charge.validate(profile)
 
 
 @dataclass
@@ -511,7 +512,7 @@ class EN16931LineItem(LineItem):
     note: IncludedNote | None = None
     # (Unit price, optional basis quantity)
     gross_unit_price: tuple[Money, OptionalQuantity | None] | None = None
-    gross_allowance_or_charge: LineAllowanceOrCharge | None = None
+    gross_allowance_or_charge: LineAllowance | LineCharge | None = None
     seller_assigned_id: str | None = None
     buyer_assigned_id: str | None = None
     product_characteristics: Sequence[ProductCharacteristic] = field(
@@ -570,49 +571,69 @@ class ProductClassification:
 
 
 @dataclass
-class LineAllowanceOrCharge:
-    """An allowance or charge for a line item."""
+class LineAllowance:
+    """An allowance for a line item."""
 
     actual_amount: Money
-    surcharge: bool = False
-    reason_code: AllowanceChargeCode | SpecialServiceCode | None = None
+    reason_code: AllowanceChargeCode | None = None
     reason: str | None = None
     _: KW_ONLY
     percent: Decimal | None = None
     basis_amount: Money | None = None
-
-    def __post_init__(self) -> None:
-        if self.surcharge:
-            if not isinstance(
-                self.reason_code, (SpecialServiceCode, NoneType)
-            ):
-                raise ModelError(
-                    "Surcharge requires a special service reason code."
-                )
-        else:
-            if not isinstance(
-                self.reason_code, (AllowanceChargeCode, NoneType)
-            ):
-                raise ModelError("Allowance/charge requires a reason code.")
 
     def validate(self, profile: type[BasicInvoice]) -> None:
         """Validate the requirements for the given profile."""
         if not issubclass(profile, EN16931Invoice):
             if self.percent is not None:
                 raise ModelError(
-                    "Percentage-based allowances/charges are not allowed "
+                    "Percentage-based allowances are not allowed "
                     f"in the {profile.PROFILE_NAME} profile."
                 )
             if self.basis_amount is not None:
                 raise ModelError(
-                    "Basis amount-based allowances/charges are not allowed "
+                    "Basis amount-based allowances are not allowed "
                     f"in the {profile.PROFILE_NAME} profile."
                 )
 
 
 @dataclass
-class DocumentAllowanceOrCharge(LineAllowanceOrCharge):
-    """An allowance or charge for the entire invoice."""
+class LineCharge:
+    """A surcharge for a line item."""
+
+    actual_amount: Money
+    reason_code: SpecialServiceCode | None = None
+    reason: str | None = None
+    _: KW_ONLY
+    percent: Decimal | None = None
+    basis_amount: Money | None = None
+
+    def validate(self, profile: type[BasicInvoice]) -> None:
+        """Validate the requirements for the given profile."""
+        if not issubclass(profile, EN16931Invoice):
+            if self.percent is not None:
+                raise ModelError(
+                    "Percentage-based charges are not allowed "
+                    f"in the {profile.PROFILE_NAME} profile."
+                )
+            if self.basis_amount is not None:
+                raise ModelError(
+                    "Basis amount-based charges are not allowed "
+                    f"in the {profile.PROFILE_NAME} profile."
+                )
+
+
+@dataclass
+class DocumentAllowance(LineAllowance):
+    """An allowance for the entire invoice."""
+
+    _: KW_ONLY
+    tax_category: TaxCategoryCode = TaxCategoryCode.STANDARD_RATE
+    tax_rate: Decimal | None = None
+
+
+@dataclass
+class DocumentCharge(LineCharge):
+    """A surcharge for the entire invoice."""
 
     _: KW_ONLY
     tax_category: TaxCategoryCode = TaxCategoryCode.STANDARD_RATE
