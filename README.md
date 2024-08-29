@@ -66,5 +66,3 @@ from facturx import format_invoice_as_text
 invoice = EN16931Invoice(...)
 print(format_invoice_as_text(invoice))
 ```
-
-Currently, only invoices with the MINIMUM profile are supported.

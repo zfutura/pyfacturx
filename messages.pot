@@ -11,124 +11,502 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.16.0\n"
 
-#: src/facturx/format.py:18
-msgid "Validated Priced Tender"
-msgstr ""
-
-#: src/facturx/format.py:19
-msgid "Invoicing Data Sheet"
-msgstr ""
-
-#: src/facturx/format.py:20
-msgid "Pro Forma Invoice"
-msgstr ""
-
-#: src/facturx/format.py:21
-msgid "Partial Invoice"
-msgstr ""
-
-#: src/facturx/format.py:22
-msgid "Invoice"
-msgstr ""
-
-#: src/facturx/format.py:23
-msgid "Credit Note"
-msgstr ""
-
-#: src/facturx/format.py:24
-msgid "Correction"
-msgstr ""
-
-#: src/facturx/format.py:25
-msgid "Prepayment"
-msgstr ""
-
-#: src/facturx/format.py:26
-msgid "Related Document"
-msgstr ""
-
-#: src/facturx/format.py:45
+#: src/facturx/format.py:54
 #, python-format
 msgid "Date: {invoice_date:%Y-%m-%d}"
 msgstr ""
 
-#: src/facturx/format.py:52
-msgid "Sender"
-msgstr ""
-
-#: src/facturx/format.py:55
-msgid "Recipient"
-msgstr ""
-
 #: src/facturx/format.py:61
-msgid "Business Process ID: {}"
-msgstr ""
-
-#: src/facturx/format.py:64
-msgid "Buyer Reference: {}"
-msgstr ""
-
-#: src/facturx/format.py:66
-msgid "Buyer Order ID: {}"
+#, python-format
+msgid "Delivery Date: {delivery_date:%Y-%m-%d}"
 msgstr ""
 
 #: src/facturx/format.py:68
-msgid "Totals"
+#, python-format
+msgid "Billing Period: {start:%Y-%m-%d}–{end:%Y-%m-%d}"
 msgstr ""
 
-#: src/facturx/format.py:79
-msgid "Line Total (net): {}"
+#: src/facturx/format.py:74
+msgid "Sender"
 msgstr ""
 
-#: src/facturx/format.py:81
-msgid "Net: {}"
+#: src/facturx/format.py:76
+msgid "Recipient"
 msgstr ""
 
-#: src/facturx/format.py:83
-msgid "Tax: {}"
+#: src/facturx/format.py:82
+msgid "Ship To"
 msgstr ""
 
-#: src/facturx/format.py:84
-msgid "Gross: {}"
+#: src/facturx/format.py:87
+msgid "Seller's Tax Representative"
 msgstr ""
 
-#: src/facturx/format.py:85
-msgid "Due amount: {}"
+#: src/facturx/format.py:93
+msgid "References"
 msgstr ""
 
-#: src/facturx/format.py:95
-msgid "{name} ({trading_business_name})"
+#: src/facturx/format.py:98
+msgid "Notes"
+msgstr ""
+
+#: src/facturx/format.py:103
+msgid "Line Items"
 msgstr ""
 
 #: src/facturx/format.py:109
+msgid "Surcharges"
+msgstr ""
+
+#: src/facturx/format.py:114
+msgid "Deductions"
+msgstr ""
+
+#: src/facturx/format.py:118 src/facturx/format.py:315
+msgid "Tax"
+msgstr ""
+
+#: src/facturx/format.py:122
+msgid "Totals"
+msgstr ""
+
+#: src/facturx/format.py:138
+#, python-format
+msgid "Related Invoice: {number} ({date:%Y-%m-%d})"
+msgstr ""
+
+#: src/facturx/format.py:144
+msgid "Related Invoice: {number}"
+msgstr ""
+
+#: src/facturx/format.py:147
+msgid "Contract ID: {}"
+msgstr ""
+
+#: src/facturx/format.py:151
+msgid "Procuring Project: {id} {name}"
+msgstr ""
+
+#: src/facturx/format.py:155
+msgid "Business Process ID: {}"
+msgstr ""
+
+#: src/facturx/format.py:158
+msgid "Buyer Reference: {}"
+msgstr ""
+
+#: src/facturx/format.py:160
+msgid "Buyer Order ID: {}"
+msgstr ""
+
+#: src/facturx/format.py:162
+msgid "Seller Order ID: {}"
+msgstr ""
+
+#: src/facturx/format.py:165
+msgid "Despatch Advice ID: {}"
+msgstr ""
+
+#: src/facturx/format.py:169
+msgid "Receiving Advice ID: {}"
+msgstr ""
+
+#: src/facturx/format.py:173
+msgid "Receiver Accounting ID: {}"
+msgstr ""
+
+#: src/facturx/format.py:184
+msgid "{id} {net_price} {quantity} {total_price}"
+msgstr ""
+
+#: src/facturx/format.py:197
+msgid "  Basis Quantity: {}"
+msgstr ""
+
+#: src/facturx/format.py:203
+msgid "  VAT: {tax_rate} % ({tax_category})"
+msgstr ""
+
+#: src/facturx/format.py:223
+msgid "Surcharge"
+msgstr ""
+
+#: src/facturx/format.py:223
+msgid "Deduction"
+msgstr ""
+
+#: src/facturx/format.py:226
+msgid "  {type}: {basis} {percent:>4} % {amount}"
+msgstr ""
+
+#: src/facturx/format.py:235 src/facturx/format.py:291
+msgid "  Reason: {reason} ({code})"
+msgstr ""
+
+#: src/facturx/format.py:240 src/facturx/format.py:296
+msgid "  Reason: {reason}"
+msgstr ""
+
+#: src/facturx/format.py:243 src/facturx/format.py:298
+msgid "  Reason: {code}"
+msgstr ""
+
+#: src/facturx/format.py:267
+msgid "Basis"
+msgstr ""
+
+#: src/facturx/format.py:268
+msgid "Amount"
+msgstr ""
+
+#: src/facturx/format.py:270
+msgid "{basis} |   %    |   Tax    | {amount}"
+msgstr ""
+
+#: src/facturx/format.py:278
+msgid "{basis} | {percent:>4} % | {tax_rate} % ({tax_category}) | {amount}"
+msgstr ""
+
+#: src/facturx/format.py:306
+msgid "Tax Currency: {}"
+msgstr ""
+
+#: src/facturx/format.py:314
+msgid "Net"
+msgstr ""
+
+#: src/facturx/format.py:317
+msgid "Cat | Rate | {net} | {tax}"
+msgstr ""
+
+#: src/facturx/format.py:323
+msgid "{category:>2}  | {rate:>2} % | {basis} | {tax}"
+msgstr ""
+
+#: src/facturx/format.py:333
+msgid "  Exemption Reason: {reason} ({code})"
+msgstr ""
+
+#: src/facturx/format.py:338
+msgid "  Exemption Reason: {reason}"
+msgstr ""
+
+#: src/facturx/format.py:342
+msgid "  Exemption Reason: {code}"
+msgstr ""
+
+#: src/facturx/format.py:351
+#, python-format
+msgid "  Tax Point Date: {date:%Y-%m-%d} ({time_code})"
+msgstr ""
+
+#: src/facturx/format.py:358
+#, python-format
+msgid "  Tax Point Date: {date:%Y-%m-%d}"
+msgstr ""
+
+#: src/facturx/format.py:363
+msgid "  Due Date Type: {time_code}"
+msgstr ""
+
+#: src/facturx/format.py:376
+msgid "Line Total (net): {}"
+msgstr ""
+
+#: src/facturx/format.py:381
+msgid "Surcharges: {}"
+msgstr ""
+
+#: src/facturx/format.py:385
+msgid "Deductions: {}"
+msgstr ""
+
+#: src/facturx/format.py:387
+msgid "Net: {}"
+msgstr ""
+
+#: src/facturx/format.py:389
+msgid "VAT: {}"
+msgstr ""
+
+#: src/facturx/format.py:390
+msgid "Gross: {}"
+msgstr ""
+
+#: src/facturx/format.py:392
+msgid "Prepaid: {}"
+msgstr ""
+
+#: src/facturx/format.py:394
+msgid "Rounding amount: {}"
+msgstr ""
+
+#: src/facturx/format.py:395
+msgid "Amount payable: {}"
+msgstr ""
+
+#: src/facturx/format.py:403
+msgid "Payee"
+msgstr ""
+
+#: src/facturx/format.py:411
+msgid "Payment Means"
+msgstr ""
+
+#: src/facturx/format.py:416
+msgid "SEPA Reference: {}"
+msgstr ""
+
+#: src/facturx/format.py:420
+msgid "Payment Reference: {}"
+msgstr ""
+
+#: src/facturx/format.py:424
+msgid "Payment Terms"
+msgstr ""
+
+#: src/facturx/format.py:443
+msgid "{quantity} {unit}"
+msgstr ""
+
+#: src/facturx/format.py:452
+msgid "{name} ({trading_business_name})"
+msgstr ""
+
+#: src/facturx/format.py:466
 msgid "VAT ID: {}"
 msgstr ""
 
-#: src/facturx/format.py:111
+#: src/facturx/format.py:468
 msgid "Tax Number: {}"
 msgstr ""
 
-#: src/facturx/format.py:113
+#: src/facturx/format.py:470
 msgid "ID: {}"
 msgstr ""
 
-#: src/facturx/format.py:115
+#: src/facturx/format.py:472
 msgid "IDs: {}"
 msgstr ""
 
-#: src/facturx/format.py:146
+#: src/facturx/format.py:503
 msgid "Contact:"
 msgstr ""
 
-#: src/facturx/format.py:152
+#: src/facturx/format.py:509
 msgid "  Phone: {phone}"
 msgstr ""
 
-#: src/facturx/format.py:161
-msgid "Global ID: {id}"
+#: src/facturx/format.py:518
+msgid "{subject_code}: {content}"
 msgstr ""
 
-#: src/facturx/format.py:164
+#: src/facturx/format.py:528
+msgid "Payment Means: {}"
+msgstr ""
+
+#: src/facturx/format.py:535
+msgid "BIC: {}"
+msgstr ""
+
+#: src/facturx/format.py:539
+msgid "Credit card: {} ({})"
+msgstr ""
+
+#: src/facturx/format.py:541
+msgid "Credit card: {}"
+msgstr ""
+
+#: src/facturx/format.py:543
+msgid "Payer IBAN: {}"
+msgstr ""
+
+#: src/facturx/format.py:552
+msgid "IBAN: {}"
+msgstr ""
+
+#: src/facturx/format.py:554
+msgid "Account owner: {}"
+msgstr ""
+
+#: src/facturx/format.py:556
+msgid "Bank: {}"
+msgstr ""
+
+#: src/facturx/format.py:564
+#, python-format
+msgid "Due Date: {due_date:%Y-%m-%d}"
+msgstr ""
+
+#: src/facturx/format.py:568
+msgid "Direct Debit Mandate ID: {}"
+msgstr ""
+
+#: src/facturx/format.py:584
+msgid "  Reference Qualifier: {}"
+msgstr ""
+
+#: src/facturx/format.py:589
+msgid "  Name: {}"
+msgstr ""
+
+#: src/facturx/format.py:591
+msgid "  URL: {}"
+msgstr ""
+
+#: src/facturx/format.py:595
+msgid "  Attachment: {filename} ({mime_type})"
+msgstr ""
+
+#: src/facturx/format.py:606
+msgid "Global ID: {}"
+msgstr ""
+
+#: src/facturx/format.py:609
 msgid "{id_type}: {id}"
+msgstr ""
+
+#: src/facturx/quantities.py:35
+msgid "unit"
+msgstr ""
+
+#: src/facturx/quantities.py:35
+msgid "units"
+msgstr ""
+
+#: src/facturx/quantities.py:36
+msgid "pc"
+msgstr ""
+
+#: src/facturx/quantities.py:36
+msgid "pcs"
+msgstr ""
+
+#: src/facturx/quantities.py:38
+msgid "day"
+msgstr ""
+
+#: src/facturx/quantities.py:38
+msgid "days"
+msgstr ""
+
+#: src/facturx/type_codes.py:66
+msgid "Validated Priced Tender"
+msgstr ""
+
+#: src/facturx/type_codes.py:67
+msgid "Invoicing Data Sheet"
+msgstr ""
+
+#: src/facturx/type_codes.py:68
+msgid "Pro Forma Invoice"
+msgstr ""
+
+#: src/facturx/type_codes.py:69
+msgid "Partial Invoice"
+msgstr ""
+
+#: src/facturx/type_codes.py:70
+msgid "Invoice"
+msgstr ""
+
+#: src/facturx/type_codes.py:71
+msgid "Credit Note"
+msgstr ""
+
+#: src/facturx/type_codes.py:72
+msgid "Correction"
+msgstr ""
+
+#: src/facturx/type_codes.py:73
+msgid "Prepayment"
+msgstr ""
+
+#: src/facturx/type_codes.py:74
+msgid "Related Document"
+msgstr ""
+
+#: src/facturx/type_codes.py:87
+msgid "Price List Version"
+msgstr ""
+
+#: src/facturx/type_codes.py:111
+msgid "Invoice Date"
+msgstr ""
+
+#: src/facturx/type_codes.py:112
+msgid "Delivery Date"
+msgstr ""
+
+#: src/facturx/type_codes.py:113
+msgid "Payment Date"
+msgstr ""
+
+#: src/facturx/type_codes.py:132
+msgid "General Information"
+msgstr ""
+
+#: src/facturx/type_codes.py:133
+msgid "Comments by Seller"
+msgstr ""
+
+#: src/facturx/type_codes.py:134
+msgid "Regulatory Information"
+msgstr ""
+
+#: src/facturx/type_codes.py:135
+msgid "Legal Information"
+msgstr ""
+
+#: src/facturx/type_codes.py:136
+msgid "Tax Information"
+msgstr ""
+
+#: src/facturx/type_codes.py:137
+msgid "Customs Information"
+msgstr ""
+
+#: src/facturx/type_codes.py:161
+msgid "Species"
+msgstr ""
+
+#: src/facturx/type_codes.py:162
+msgid "Check"
+msgstr ""
+
+#: src/facturx/type_codes.py:163
+msgid "Transfer"
+msgstr ""
+
+#: src/facturx/type_codes.py:164
+msgid "Bank Payment"
+msgstr ""
+
+#: src/facturx/type_codes.py:165
+msgid "Credit Card"
+msgstr ""
+
+#: src/facturx/type_codes.py:166
+msgid "Direct Debit"
+msgstr ""
+
+#: src/facturx/type_codes.py:167
+msgid "Standing Agreement"
+msgstr ""
+
+#: src/facturx/type_codes.py:168
+msgid "SEPA Credit Transfer"
+msgstr ""
+
+#: src/facturx/type_codes.py:169
+msgid "SEPA Direct Debit"
+msgstr ""
+
+#: src/facturx/type_codes.py:170
+msgid "Report"
+msgstr ""
+
+#: src/facturx/type_codes.py:171
+msgid "Interim Agreement"
 msgstr ""
 

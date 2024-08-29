@@ -4,6 +4,11 @@ UNTDID type codes, maintained by UN/CEFACT.
 
 from enum import IntEnum, StrEnum
 
+
+def N_(s: str) -> str:
+    return s
+
+
 ALLOWED_MIME_TYPES = [
     "application/pdf",
     "image/png",
@@ -57,12 +62,30 @@ class DocumentTypeCode(IntEnum):
         )
 
 
+DOCUMENT_TYPE_NAMES = {
+    DocumentTypeCode.VALIDATED_PRICED_TENDER: N_("Validated Priced Tender"),
+    DocumentTypeCode.INVOICING_DATA_SHEET: N_("Invoicing Data Sheet"),
+    DocumentTypeCode.PRO_FORMA_INVOICE: N_("Pro Forma Invoice"),
+    DocumentTypeCode.PARTIAL_INVOICE: N_("Partial Invoice"),
+    DocumentTypeCode.INVOICE: N_("Invoice"),
+    DocumentTypeCode.CREDIT_NOTE: N_("Credit Note"),
+    DocumentTypeCode.CORRECTION: N_("Correction"),
+    DocumentTypeCode.PREPAYMENT: N_("Prepayment"),
+    DocumentTypeCode.RELATED_DOCUMENT: N_("Related Document"),
+}
+
+
 class ReferenceQualifierCode(StrEnum):
     """Selected reference qualifier codes defined in UNTDID 1153.
 
     https://service.unece.org/trade/untdid/d98b/uncl/uncl1153.htm"""
 
     PRICE_LIST_VERSION = "PI"
+
+
+REFERENCE_QUALIFIER_NAMES = {
+    ReferenceQualifierCode.PRICE_LIST_VERSION: N_("Price List Version"),
+}
 
 
 class PaymentTimeCode(IntEnum):
@@ -84,6 +107,13 @@ class PaymentTimeCode(IntEnum):
         )
 
 
+PAYMENT_TIME_CODE_NAMES = {
+    PaymentTimeCode.INVOICE_DATE: N_("Invoice Date"),
+    PaymentTimeCode.DELIVERY_DATE: N_("Delivery Date"),
+    PaymentTimeCode.PAYMENT_DATE: N_("Payment Date"),
+}
+
+
 class TextSubjectCode(StrEnum):
     """Selected text subject codes defined in UNTDID 4451.
 
@@ -96,6 +126,16 @@ class TextSubjectCode(StrEnum):
     LEGAL_INFORMATION = "ABL"
     TAX_INFORMATION = "TXD"
     CUSTOMS_INFORMATION = "CUS"
+
+
+TEXT_SUBJECT_CODE_NAMES = {
+    TextSubjectCode.GENERAL_INFORMATION: N_("General Information"),
+    TextSubjectCode.COMMENTS_BY_SELLER: N_("Comments by Seller"),
+    TextSubjectCode.REGULATORY_INFORMATION: N_("Regulatory Information"),
+    TextSubjectCode.LEGAL_INFORMATION: N_("Legal Information"),
+    TextSubjectCode.TAX_INFORMATION: N_("Tax Information"),
+    TextSubjectCode.CUSTOMS_INFORMATION: N_("Customs Information"),
+}
 
 
 class PaymentMeansCode(StrEnum):
@@ -115,6 +155,21 @@ class PaymentMeansCode(StrEnum):
     SEPA_DIRECT_DEBIT = "59"
     REPORT = "97"
     INTERIM_AGREEMENT = "ZZZ"
+
+
+PAYMENT_MEANS_NAMES = {
+    PaymentMeansCode.SPECIES: N_("Species"),
+    PaymentMeansCode.CHECK: N_("Check"),
+    PaymentMeansCode.TRANSFER: N_("Transfer"),
+    PaymentMeansCode.BANK_PAYMENT: N_("Bank Payment"),
+    PaymentMeansCode.CREDIT_CARD: N_("Credit Card"),
+    PaymentMeansCode.DIRECT_DEBIT: N_("Direct Debit"),
+    PaymentMeansCode.STANDING_AGREEMENT: N_("Standing Agreement"),
+    PaymentMeansCode.SEPA_CREDIT_TRANSFER: N_("SEPA Credit Transfer"),
+    PaymentMeansCode.SEPA_DIRECT_DEBIT: N_("SEPA Direct Debit"),
+    PaymentMeansCode.REPORT: N_("Report"),
+    PaymentMeansCode.INTERIM_AGREEMENT: N_("Interim Agreement"),
+}
 
 
 class AllowanceChargeCode(IntEnum):
@@ -166,4 +221,7 @@ class SpecialServiceCode(StrEnum):
 
 
 class VATExemptionCode(StrEnum):
-    """VAT exemption codes defined by the Connecting Europe Facility (CEF)."""
+    """VAT exemption codes defined by the Connecting Europe Facility (CEF).
+
+    https://ec.europa.eu/digital-building-blocks/sites/display/DIGITAL/Registry+of+supporting+artefacts+to+implement+EN16931
+    """
