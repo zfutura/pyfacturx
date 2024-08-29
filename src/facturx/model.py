@@ -399,7 +399,7 @@ class BasicWLInvoice(MinimumInvoice):
     payment_means: Sequence[PaymentMeans] = field(default_factory=list)
     payment_terms: PaymentTerms | None = None
     preceding_invoice: tuple[str, datetime.date | None] | None = None
-    receiver_account_ids: Sequence[str] = field(default_factory=list)
+    receiver_accounting_ids: Sequence[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         super().__post_init__()
@@ -453,7 +453,7 @@ class BasicInvoice(BasicWLInvoice):
                     )
         for li in self.line_items:
             li.validate(type(self))
-        if len(self.receiver_account_ids) > 1:
+        if len(self.receiver_accounting_ids) > 1:
             raise ModelError(
                 "Multiple accounting reference IDs are not allowed in the "
                 f"{self.PROFILE_NAME} profile."

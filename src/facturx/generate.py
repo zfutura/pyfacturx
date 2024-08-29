@@ -729,7 +729,7 @@ def _generate_settlement(parent: ET.Element, invoice: MinimumInvoice) -> None:
         and invoice.preceding_invoice is not None
     ):
         _generate_preceding_invoice(settlement_el, invoice.preceding_invoice)
-        for ref_id in invoice.receiver_account_ids:
+        for ref_id in invoice.receiver_accounting_ids:
             _generate_trade_account(settlement_el, ref_id)
 
 

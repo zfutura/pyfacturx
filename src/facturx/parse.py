@@ -494,7 +494,7 @@ def _parse_minimum_invoice(tree: ET.Element) -> MinimumInvoice:
             "InvoiceReferencedDocument element is not supported in MINIMUM "
             "profile",
         )
-    if len(settlement.receiver_account_ids) > 0:
+    if len(settlement.receiver_accounting_ids) > 0:
         raise InvalidProfileError(
             "MINIMUM",
             "ReceivableSpecifiedTradeAccountingAccount element is not "
@@ -658,7 +658,7 @@ def _basic_wl_args(
         "payment_means": settlement.payment_means,
         "payment_terms": settlement.payment_terms,
         "preceding_invoice": settlement.preceding_invoice,
-        "receiver_account_ids": settlement.receiver_account_ids,
+        "receiver_accounting_ids": settlement.receiver_accounting_ids,
     }
 
 
@@ -868,7 +868,7 @@ class _TradeSettlement(NamedTuple):
     charges: list[DocumentCharge]  # BASIC WL+
     payment_terms: PaymentTerms | None  # BASIC WL+
     preceding_invoice: tuple[str, date | None] | None  # BASIC WL+
-    receiver_account_ids: list[str]  # BASIC WL+
+    receiver_accounting_ids: list[str]  # BASIC WL+
 
 
 def _parse_settlement(parent: ET.Element) -> _TradeSettlement:
@@ -906,11 +906,11 @@ def _parse_settlement(parent: ET.Element) -> _TradeSettlement:
     payment_terms = _parse_payment_terms(el)
     summation = _parse_summation(el, currency_code)
     referenced_invoice = _parse_referenced_invoice(el)
-    receiver_account_ids: list[str] = []
+    receiver_accounting_ids: list[str] = []
     for el in parent.findall(
         f"./{{{NS_RAM}}}ReceivableSpecifiedTradeAccountingAccount"
     ):
-        receiver_account_ids.append(_find_text(el, f"./{{{NS_RAM}}}ID"))
+        receiver_accounting_ids.append(_find_text(el, f"./{{{NS_RAM}}}ID"))
     return _TradeSettlement(
         currency_code,
         summation,
@@ -925,7 +925,7 @@ def _parse_settlement(parent: ET.Element) -> _TradeSettlement:
         [c for c in allowances if isinstance(c, DocumentCharge)],
         payment_terms,
         referenced_invoice,
-        receiver_account_ids,
+        receiver_accounting_ids,
     )
 
 
