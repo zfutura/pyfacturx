@@ -131,8 +131,8 @@ def format_invoice_as_text(invoice: MinimumInvoice) -> str:
 def _format_references(invoice: MinimumInvoice) -> str:
     lines = []
     if isinstance(invoice, BasicWLInvoice):
-        if invoice.preceding_invoice:
-            number, date = invoice.preceding_invoice
+        for preceding in invoice.preceding_invoices:
+            number, date = preceding
             if date:
                 lines.append(
                     _("Related Invoice: {number} ({date:%Y-%m-%d})").format(

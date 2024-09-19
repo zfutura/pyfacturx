@@ -724,11 +724,9 @@ def _generate_settlement(parent: ET.Element, invoice: MinimumInvoice) -> None:
 
     _generate_summation(settlement_el, invoice)
 
-    if (
-        isinstance(invoice, BasicWLInvoice)
-        and invoice.preceding_invoice is not None
-    ):
-        _generate_preceding_invoice(settlement_el, invoice.preceding_invoice)
+    if isinstance(invoice, BasicWLInvoice):
+        for preceding in invoice.preceding_invoices:
+            _generate_preceding_invoice(settlement_el, preceding)
         for ref_id in invoice.receiver_accounting_ids:
             _generate_trade_account(settlement_el, ref_id)
 

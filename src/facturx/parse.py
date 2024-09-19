@@ -488,7 +488,7 @@ def _parse_minimum_invoice(tree: ET.Element) -> MinimumInvoice:
             "MINIMUM",
             "RoundingAmount element is not supported in MINIMUM profile",
         )
-    if settlement.preceding_invoice is not None:
+    if len(settlement.preceding_invoices) > 0:
         raise InvalidProfileError(
             "MINIMUM",
             "InvoiceReferencedDocument element is not supported in MINIMUM "
@@ -657,7 +657,7 @@ def _basic_wl_args(
         "payment_reference": settlement.payment_reference,
         "payment_means": settlement.payment_means,
         "payment_terms": settlement.payment_terms,
-        "preceding_invoice": settlement.preceding_invoice,
+        "preceding_invoices": settlement.preceding_invoices,
         "receiver_accounting_ids": settlement.receiver_accounting_ids,
     }
 
@@ -867,7 +867,7 @@ class _TradeSettlement(NamedTuple):
     allowances: list[DocumentAllowance]  # BASIC WL+
     charges: list[DocumentCharge]  # BASIC WL+
     payment_terms: PaymentTerms | None  # BASIC WL+
-    preceding_invoice: tuple[str, date | None] | None  # BASIC WL+
+    preceding_invoices: list[tuple[str, date | None]]  # BASIC WL+
     receiver_accounting_ids: list[str]  # BASIC WL+
 
 
@@ -905,7 +905,7 @@ def _parse_settlement(parent: ET.Element) -> _TradeSettlement:
     ]
     payment_terms = _parse_payment_terms(el)
     summation = _parse_summation(el, currency_code)
-    referenced_invoice = _parse_referenced_invoice(el)
+    referenced_invoices = _parse_referenced_invoices(el)
     receiver_accounting_ids: list[str] = []
     for el in parent.findall(
         f"./{{{NS_RAM}}}ReceivableSpecifiedTradeAccountingAccount"
@@ -924,7 +924,7 @@ def _parse_settlement(parent: ET.Element) -> _TradeSettlement:
         [a for a in allowances if isinstance(a, DocumentAllowance)],
         [c for c in allowances if isinstance(c, DocumentCharge)],
         payment_terms,
-        referenced_invoice,
+        referenced_invoices,
         receiver_accounting_ids,
     )
 
@@ -1520,12 +1520,14 @@ def _parse_summation(
     )
 
 
-def _parse_referenced_invoice(
+def _parse_referenced_invoices(
     parent: ET.Element,
-) -> tuple[str, date | None] | None:
-    el = parent.find(f"./{{{NS_RAM}}}InvoiceReferencedDocument")
-    if el is None:
-        return None
+) -> list[tuple[str, date | None]]:
+    els = parent.findall(f"./{{{NS_RAM}}}InvoiceReferencedDocument")
+    return [_parse_referenced_invoice(el) for el in els]
+
+
+def _parse_referenced_invoice(el: ET.Element) -> tuple[str, date | None]:
     id = _find_text(el, f"./{{{NS_RAM}}}IssuerAssignedID")
     issue_date = _find_date_optional(
         el, f"./{{{NS_RAM}}}FormattedIssueDateTime"

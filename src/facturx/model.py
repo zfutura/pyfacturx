@@ -398,7 +398,9 @@ class BasicWLInvoice(MinimumInvoice):
     payment_reference: str | None = None
     payment_means: Sequence[PaymentMeans] = field(default_factory=list)
     payment_terms: PaymentTerms | None = None
-    preceding_invoice: tuple[str, datetime.date | None] | None = None
+    preceding_invoices: list[tuple[str, datetime.date | None]] = field(
+        default_factory=list
+    )
     receiver_accounting_ids: Sequence[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:

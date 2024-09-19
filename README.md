@@ -14,7 +14,7 @@ See the [Factur-X website (French)](https://www.factur-x.org/) or
 [FeRD website (German)](https://www.ferd-net.de/) for more information.
 
 Currently, this library supports reading and writing XML files according to
-Factur-X Version 1.0.06 (aka ZUGFeRD 2.2) in the profiles up to EN 16931
+Factur-X Version 1.0.07 (aka ZUGFeRD 2.3) in the profiles up to EN 16931
 (Comfort).
 
 Generally in scope of this library, but currently not supported are:
