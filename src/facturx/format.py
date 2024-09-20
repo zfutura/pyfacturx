@@ -164,7 +164,7 @@ def _format_references(invoice: MinimumInvoice) -> str:
         lines.append(
             _("Despatch Advice ID: {}").format(invoice.despatch_advice_id)
         )
-    if isinstance(invoice, EN16931Invoice):
+    if isinstance(invoice, EN16931Invoice) and invoice.receiving_advice_id:
         lines.append(
             _("Receiving Advice ID: {}").format(invoice.receiving_advice_id)
         )
