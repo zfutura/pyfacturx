@@ -18,6 +18,7 @@ exclude = ["src/facturx/test_*"]
 
 [tool.poetry.dependencies]
 python = "^3.11"
+pypdf = "^5.0.0"
 
 [tool.poetry.group.dev.dependencies]
 babel = "^2.16.0"

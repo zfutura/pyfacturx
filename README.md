@@ -20,7 +20,6 @@ Factur-X Version 1.0.07 (aka ZUGFeRD 2.3) in the profiles up to EN 16931
 Generally in scope of this library, but currently not supported are:
 
 * Extended and XRechnung profiles.
-* Reading PDF Factur-X files.
 * Embedding the XML in PDF files.
 
 ## Usage
@@ -44,15 +43,15 @@ invoice = EN16931Invoice(
 xml_string = generate(invoice)
 ```
 
-### Parsing Factur-X XML
+### Parsing Factur-X PDF files
 
-PyFactur-X can parse certain Factur-X XML files. The parser will return an
+PyFactur-X can parse certain Factur-X PDF files. The parser will return an
 instance of the correct profile.
 
 ```python
-from facturx import parse_xml
+from facturx import parse_pdf
 
-invoice = parse_xml(path_or_xml_string)  # MinimumInvoice or a subclass
+invoice = parse_pdf(path_or_xml_string)  # MinimumInvoice or a subclass
 ```
 
 ### Printing invoices

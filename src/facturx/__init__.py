@@ -9,6 +9,7 @@ from .generate import (
 from .model import *  # noqa: F403
 from .money import Money as Money
 from .parse import parse_xml as parse_xml
+from .pdf_parse import parse_pdf as parse_pdf
 
 FACTURX_VERSION: Final = "1.0.07"
 ZUGFERD_VERSION: Final = "2.3"

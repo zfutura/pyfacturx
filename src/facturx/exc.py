@@ -2,6 +2,18 @@ class FacturXError(Exception):
     """Base class for Factur-X exceptions."""
 
 
+class PDFError(FacturXError):
+    """Base class for PDF processing exceptions."""
+
+
+class PDFParseError(FacturXError):
+    """Raise when a PDF file cannot be processed."""
+
+
+class NoFacturXError(PDFParseError):
+    """Raised when a PDF file does not contain a Factur-X XML file."""
+
+
 class ModelError(FacturXError):
     """Raised when a Factur-X model is invalid."""
 
