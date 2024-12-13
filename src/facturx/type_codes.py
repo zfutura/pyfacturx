@@ -126,6 +126,7 @@ class TextSubjectCode(StrEnum):
     LEGAL_INFORMATION = "ABL"
     TAX_INFORMATION = "TXD"
     CUSTOMS_INFORMATION = "CUS"
+    TITLE = "AFM"
 
 
 TEXT_SUBJECT_CODE_NAMES = {
@@ -135,6 +136,7 @@ TEXT_SUBJECT_CODE_NAMES = {
     TextSubjectCode.LEGAL_INFORMATION: N_("Legal Information"),
     TextSubjectCode.TAX_INFORMATION: N_("Tax Information"),
     TextSubjectCode.CUSTOMS_INFORMATION: N_("Customs Information"),
+    TextSubjectCode.TITLE: N_("Title"),
 }
 
 
@@ -143,7 +145,7 @@ class PaymentMeansCode(StrEnum):
 
     https://service.unece.org/trade/untdid/d98a/uncl/uncl4461.htm
     """
-
+    NOTDEFINED = "1"
     SPECIES = "10"
     CHECK = "20"
     TRANSFER = "30"
@@ -158,6 +160,7 @@ class PaymentMeansCode(StrEnum):
 
 
 PAYMENT_MEANS_NAMES = {
+    PaymentMeansCode.NOTDEFINED: N_("Instrument not defined"),
     PaymentMeansCode.SPECIES: N_("Species"),
     PaymentMeansCode.CHECK: N_("Check"),
     PaymentMeansCode.TRANSFER: N_("Transfer"),
