@@ -22,7 +22,7 @@ pypdf = "^5.3.0"
 
 [tool.poetry.group.dev.dependencies]
 babel = "~=2.17.0"
-mypy = "~=1.14.1"
+mypy = "~=1.15.0"
 poethepoet = "^0.32.2"
 pytest = "^8.3.4"
 ruff = "^0.9.9"
